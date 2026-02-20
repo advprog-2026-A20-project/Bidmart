@@ -13,6 +13,11 @@ jobs:
   backend:
     runs-on: ubuntu-22.04
 
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL}}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY}}
+      SPRING_PROFILES_ACTIVE: test
+
     steps:
       - name: Check out the Git repository
         uses: actions/checkout@v4
