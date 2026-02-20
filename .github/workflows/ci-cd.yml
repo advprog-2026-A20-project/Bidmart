@@ -22,6 +22,9 @@ jobs:
           distribution: "temurin"
           java-version: 21
           cache: "gradle"
+      - name: Ensure Gradle wrapper is executable
+        working-directory: backend
+        run: chmod +x ./gradlew
       - name: Run unit tests
         working-directory: backend
         run: ./gradlew test
