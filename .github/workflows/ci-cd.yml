@@ -53,7 +53,7 @@ jobs:
         working-directory: frontend
         run: npm run build
 
- # CD (Continuous Deployment)
+  # CD (Continuous Deployment)
   deployment-staging:
     if: github.ref == 'refs/heads/staging'
     needs: [backend, frontend]
