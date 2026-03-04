@@ -1,4 +1,4 @@
-const API_BASE = window.__API_URL__ || '/api'
+const API_BASE = window.__API_URL__ || 'http://localhost:8080/api'
 
 const getToken = () => localStorage.getItem('token') || ''
 

@@ -45,13 +45,14 @@ const truncateText = (value, limit = 140) => {
 }
 
 const normalizeListing = (listing) => {
-  const sellerId = listing?.sellerId || listing?.seller?.id || ''
+  const sellerId = listing?.sellerId ?? listing?.seller?.id ?? listing?.seller?.userId ?? null
   return {
-    id: listing?.id || `${listing?.title}-${sellerId}`,
+    id: listing?.id || `${listing?.title}-${sellerId || 'unknown'}`,
     title: listing?.title || 'Untitled',
     description: listing?.description || '',
     price: listing?.price,
-    createdAt: listing?.createdAt,
+    sellerId,
+    createdAt: listing?.createdAt ?? listing?.created_at ?? null,
   }
 }
 
