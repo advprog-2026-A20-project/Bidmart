@@ -29,7 +29,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/listings/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/listings").hasRole("SELLER")
                 .anyRequest().authenticated()

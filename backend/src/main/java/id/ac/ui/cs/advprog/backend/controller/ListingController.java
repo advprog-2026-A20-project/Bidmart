@@ -4,6 +4,8 @@ import id.ac.ui.cs.advprog.backend.dto.ListingCreateRequest;
 import id.ac.ui.cs.advprog.backend.dto.ListingResponse;
 import id.ac.ui.cs.advprog.backend.service.ListingService;
 import java.util.List;
+import java.util.UUID;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,12 +30,12 @@ public class ListingController {
         @RequestBody ListingCreateRequest request,
         Authentication authentication
     ) {
-        String email = authentication.getName();
-        return listingService.createListing(request, email);
+        UUID sellerId = UUID.fromString(authentication.getName());
+        return listingService.createListing(request, sellerId);
     }
 
     @GetMapping
-    public List<ListingResponse> list() {
-        return listingService.getAllListings();
+    public List<ListingResponse> list(Pageable pageable) {
+        return listingService.getAllListings(pageable);
     }
 }

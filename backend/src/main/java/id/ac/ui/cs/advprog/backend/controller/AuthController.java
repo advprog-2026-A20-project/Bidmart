@@ -6,6 +6,7 @@ import id.ac.ui.cs.advprog.backend.dto.RegisterRequest;
 import id.ac.ui.cs.advprog.backend.dto.RegisterResponse;
 import id.ac.ui.cs.advprog.backend.dto.UserSummary;
 import id.ac.ui.cs.advprog.backend.service.AuthService;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,6 +38,6 @@ public class AuthController {
 
     @GetMapping("/me")
     public UserSummary me(Authentication authentication) {
-        return authService.me(authentication.getName());
+        return authService.me(UUID.fromString(authentication.getName()));
     }
 }
