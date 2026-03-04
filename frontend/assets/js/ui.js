@@ -4,6 +4,10 @@ const navContainer = document.querySelector('#navbar')
 const footerContainer = document.querySelector('#footer')
 const createListingLink = document.querySelector('#create-listing-link')
 
+const getCurrentPath = () => window.location.pathname
+
+const isActive = (href) => getCurrentPath().endsWith(href)
+
 const buildNavbar = (user) => {
   if (!navContainer) {
     return
@@ -13,7 +17,7 @@ const buildNavbar = (user) => {
     <header class="border-b border-slate-900">
       <nav class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-6 py-4">
         <a class="text-lg font-semibold" href="/pages/listings.html">Bidmart</a>
-        <div class="flex items-center gap-4 text-sm" id="nav-links"></div>
+        <div class="flex flex-wrap items-center gap-3 text-sm" id="nav-links"></div>
       </nav>
     </header>
   `
@@ -30,34 +34,36 @@ const buildNavbar = (user) => {
     links.push({ label: 'Create Listing', href: '/pages/create-listing.html' })
   }
 
-  if (user) {
-    links.push({ label: 'Logout', href: '#logout' })
-  } else {
+  if (!user) {
     links.push({ label: 'Login', href: '/pages/login.html' })
     links.push({ label: 'Register', href: '/pages/register.html' })
   }
 
   links.forEach((link) => {
-    if (link.href === '#logout') {
-      const button = document.createElement('button')
-      button.type = 'button'
-      button.textContent = link.label
-      button.className = 'text-sm text-slate-300 hover:text-white'
-      button.addEventListener('click', () => {
-        setToken('')
-        setUser(null)
-        window.location.href = '/pages/login.html'
-      })
-      linksContainer.appendChild(button)
-      return
-    }
-
     const anchor = document.createElement('a')
     anchor.href = link.href
     anchor.textContent = link.label
-    anchor.className = 'text-sm text-slate-300 hover:text-white'
+    anchor.className = `text-sm ${isActive(link.href) ? 'text-white' : 'text-slate-300 hover:text-white'}`
     linksContainer.appendChild(anchor)
   })
+
+  if (user) {
+    const badge = document.createElement('span')
+    badge.className = 'rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-200'
+    badge.textContent = user.email || user.role || 'User'
+    linksContainer.appendChild(badge)
+
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.textContent = 'Logout'
+    button.className = 'text-sm text-slate-300 hover:text-white'
+    button.addEventListener('click', () => {
+      setToken('')
+      setUser(null)
+      window.location.href = '/pages/login.html'
+    })
+    linksContainer.appendChild(button)
+  }
 }
 
 const buildFooter = () => {
