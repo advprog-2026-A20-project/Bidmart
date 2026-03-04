@@ -91,4 +91,10 @@ public class AuthService {
         UserSummary summary = new UserSummary(user.getId(), user.getEmail(), user.getRole());
         return new LoginResponse(token, summary);
     }
+
+    public UserSummary me(String email) {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+        return new UserSummary(user.getId(), user.getEmail(), user.getRole());
+    }
 }
