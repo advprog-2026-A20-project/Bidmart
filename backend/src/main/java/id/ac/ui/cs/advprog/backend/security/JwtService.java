@@ -33,16 +33,17 @@ public class JwtService {
     public String generateToken(User user) {
         Instant now = Instant.now();
         return Jwts.builder()
-            .setSubject(user.getEmail())
+            .setSubject(user.getId().toString())
             .setIssuedAt(Date.from(now))
             .setExpiration(Date.from(now.plusSeconds(expirationSeconds)))
             .claim("role", user.getRole().name())
+            .claim("email", user.getEmail())
             .signWith(secretKey, SignatureAlgorithm.HS256)
             .compact();
     }
 
     public String extractEmail(String token) {
-        return parseClaims(token).getSubject();
+        return parseClaims(token).get("email", String.class);
     }
 
     public String extractRole(String token) {

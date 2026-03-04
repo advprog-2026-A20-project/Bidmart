@@ -1,9 +1,10 @@
 package id.ac.ui.cs.advprog.backend.service;
 
-import id.ac.ui.cs.advprog.backend.dto.AuthResponse;
 import id.ac.ui.cs.advprog.backend.dto.LoginRequest;
+import id.ac.ui.cs.advprog.backend.dto.LoginResponse;
 import id.ac.ui.cs.advprog.backend.dto.RegisterRequest;
 import id.ac.ui.cs.advprog.backend.dto.RegisterResponse;
+import id.ac.ui.cs.advprog.backend.dto.UserSummary;
 import id.ac.ui.cs.advprog.backend.model.Role;
 import id.ac.ui.cs.advprog.backend.model.User;
 import id.ac.ui.cs.advprog.backend.repository.UserRepository;
@@ -11,9 +12,6 @@ import id.ac.ui.cs.advprog.backend.security.JwtService;
 import java.time.Instant;
 import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,18 +24,15 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
     public AuthService(
         UserRepository userRepository,
         PasswordEncoder passwordEncoder,
-        AuthenticationManager authenticationManager,
         JwtService jwtService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
     }
 
@@ -77,7 +72,7 @@ public class AuthService {
         return new RegisterResponse(saved.getId(), saved.getEmail(), saved.getRole());
     }
 
-    public AuthResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
         if (request.email() == null || request.email().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
         }
@@ -85,18 +80,15 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required");
         }
 
-        try {
-            authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-            );
-        } catch (AuthenticationException ex) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
-        }
-
         User user = userRepository.findByEmail(request.email())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+        }
+
         String token = jwtService.generateToken(user);
-        return new AuthResponse(token, user.getEmail(), user.getRole());
+        UserSummary summary = new UserSummary(user.getId(), user.getEmail(), user.getRole());
+        return new LoginResponse(token, summary);
     }
 }

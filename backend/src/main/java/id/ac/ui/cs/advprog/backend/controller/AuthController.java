@@ -1,7 +1,7 @@
 package id.ac.ui.cs.advprog.backend.controller;
 
-import id.ac.ui.cs.advprog.backend.dto.AuthResponse;
 import id.ac.ui.cs.advprog.backend.dto.LoginRequest;
+import id.ac.ui.cs.advprog.backend.dto.LoginResponse;
 import id.ac.ui.cs.advprog.backend.dto.RegisterRequest;
 import id.ac.ui.cs.advprog.backend.dto.RegisterResponse;
 import id.ac.ui.cs.advprog.backend.service.AuthService;
@@ -28,7 +28,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody LoginRequest request) {
+    public LoginResponse login(@RequestBody LoginRequest request) {
         return authService.login(request);
     }
 }
