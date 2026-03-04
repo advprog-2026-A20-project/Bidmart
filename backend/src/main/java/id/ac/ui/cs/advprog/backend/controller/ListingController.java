@@ -5,6 +5,7 @@ import id.ac.ui.cs.advprog.backend.dto.ListingResponse;
 import id.ac.ui.cs.advprog.backend.service.ListingService;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,7 +35,7 @@ public class ListingController {
     }
 
     @GetMapping
-    public List<ListingResponse> list() {
-        return listingService.getAllListings();
+    public List<ListingResponse> list(Pageable pageable) {
+        return listingService.getAllListings(pageable);
     }
 }
