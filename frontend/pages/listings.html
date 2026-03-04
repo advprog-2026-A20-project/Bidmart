@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Listings - Bidmart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <header class="border-b border-slate-900">
+      <nav class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+        <a class="text-lg font-semibold" href="/pages/listings.html">Bidmart</a>
+        <div class="flex items-center gap-4 text-sm" id="nav-links"></div>
+      </nav>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-6 py-10">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-semibold">Listings</h1>
+          <p class="text-sm text-slate-400">Jelajahi listing terbaru di Bidmart.</p>
+        </div>
+        <a class="rounded-full bg-indigo-500 px-4 py-2 text-sm font-semibold" href="/pages/create-listing.html" id="create-listing-link">
+          Create Listing
+        </a>
+      </div>
+
+      <section class="mt-8 grid gap-4 sm:grid-cols-2" id="listings-container"></section>
+      <p class="mt-6 text-sm text-slate-400" id="listings-empty"></p>
+      <p class="mt-4 text-sm text-red-400" id="listings-error"></p>
+    </main>
+
+    <script type="module" src="/assets/js/listings.js"></script>
+    <script type="module" src="/assets/js/ui.js"></script>
+  </body>
+</html>
