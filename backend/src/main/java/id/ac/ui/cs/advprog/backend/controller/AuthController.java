@@ -3,6 +3,7 @@ package id.ac.ui.cs.advprog.backend.controller;
 import id.ac.ui.cs.advprog.backend.dto.AuthResponse;
 import id.ac.ui.cs.advprog.backend.dto.LoginRequest;
 import id.ac.ui.cs.advprog.backend.dto.RegisterRequest;
+import id.ac.ui.cs.advprog.backend.dto.RegisterResponse;
 import id.ac.ui.cs.advprog.backend.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +23,7 @@ public class AuthController {
 
     @PostMapping("/register")
     @org.springframework.web.bind.annotation.ResponseStatus(HttpStatus.CREATED)
-    public AuthResponse register(@RequestBody RegisterRequest request) {
+    public RegisterResponse register(@RequestBody RegisterRequest request) {
         return authService.register(request);
     }
 
