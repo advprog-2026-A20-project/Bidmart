@@ -1,4 +1,4 @@
-import { request } from './api.js'
+import { getUser, request } from './api.js'
 
 const container = document.querySelector('#listings-container')
 const skeleton = document.querySelector('#listings-skeleton')
@@ -34,6 +34,20 @@ const formatDate = (value) => {
   })
 }
 
+const formatSeller = (sellerId, user) => {
+  if (user?.id && sellerId === user.id) {
+    return 'you'
+  }
+  if (!sellerId) {
+    return 'Unknown seller'
+  }
+  const text = String(sellerId)
+  if (text.length <= 10) {
+    return text
+  }
+  return `${text.slice(0, 8)}…`
+}
+
 const truncateText = (value, limit = 140) => {
   if (!value) {
     return ''
@@ -58,6 +72,7 @@ const normalizeListing = (listing) => {
 
 const renderListing = (listing) => {
   const normalized = normalizeListing(listing)
+  const user = getUser()
   const card = document.createElement('article')
   card.className = 'rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-sm'
 
@@ -76,7 +91,15 @@ const renderListing = (listing) => {
   const meta = document.createElement('p')
   meta.className = 'mt-4 text-xs text-slate-500'
   const dateText = formatDate(normalized.createdAt)
-  meta.textContent = dateText ? `Dibuat ${dateText}` : ''
+  const sellerText = formatSeller(normalized.sellerId, user)
+  const metaParts = []
+  if (dateText) {
+    metaParts.push(`Dibuat ${dateText}`)
+  }
+  if (sellerText) {
+    metaParts.push(`Created by ${sellerText}`)
+  }
+  meta.textContent = metaParts.join(' · ')
 
   card.appendChild(title)
   card.appendChild(price)
