@@ -10,6 +10,7 @@ import id.ac.ui.cs.advprog.backend.model.User;
 import id.ac.ui.cs.advprog.backend.repository.UserRepository;
 import id.ac.ui.cs.advprog.backend.security.JwtService;
 import java.time.Instant;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -92,8 +93,8 @@ public class AuthService {
         return new LoginResponse(token, summary);
     }
 
-    public UserSummary me(String email) {
-        User user = userRepository.findByEmail(email)
+    public UserSummary me(UUID userId) {
+        User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         return new UserSummary(user.getId(), user.getEmail(), user.getRole());
     }

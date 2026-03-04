@@ -9,6 +9,7 @@ import id.ac.ui.cs.advprog.backend.repository.ListingRepository;
 import id.ac.ui.cs.advprog.backend.repository.UserRepository;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,7 +25,7 @@ public class ListingService {
         this.userRepository = userRepository;
     }
 
-    public ListingResponse createListing(ListingCreateRequest request, String sellerEmail) {
+    public ListingResponse createListing(ListingCreateRequest request, UUID sellerId) {
         if (request.title() == null || request.title().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title is required");
         }
@@ -35,7 +36,7 @@ public class ListingService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Price must be positive");
         }
 
-        User seller = userRepository.findByEmail(sellerEmail)
+        User seller = userRepository.findById(sellerId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         if (seller.getRole() != Role.SELLER) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only SELLER can create listings");
@@ -65,7 +66,7 @@ public class ListingService {
             listing.getTitle(),
             listing.getDescription(),
             listing.getPrice(),
-            listing.getSeller().getEmail(),
+            listing.getSeller().getId(),
             listing.getCreatedAt()
         );
     }
