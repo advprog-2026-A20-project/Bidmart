@@ -1,4 +1,5 @@
 import { getUser, request } from './api.js'
+import { showToast } from './ui.js'
 
 const form = document.querySelector('#create-listing-form')
 const errorState = document.querySelector('#create-listing-error')
@@ -98,6 +99,7 @@ if (form) {
     const validationMessage = validatePayload(payload)
     if (validationMessage) {
       errorState.textContent = validationMessage
+      showToast('error', validationMessage)
       return
     }
 
@@ -109,13 +111,15 @@ if (form) {
         auth: true,
       })
 
-      alert('Listing created')
+      showToast('success', 'Listing created')
       window.location.href = '/pages/listings.html'
     } catch (error) {
       if (error.status === 403) {
         errorState.textContent = 'Only seller can create listing'
+        showToast('error', 'Only seller can create listing')
       } else {
         errorState.textContent = error.message
+        showToast('error', error.message)
       }
     } finally {
       setSubmitting(false)

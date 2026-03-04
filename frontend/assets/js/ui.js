@@ -8,6 +8,40 @@ const getCurrentPath = () => window.location.pathname
 
 const isActive = (href) => getCurrentPath().endsWith(href)
 
+const ensureToastRoot = () => {
+  let root = document.querySelector('#toast-root')
+  if (root) {
+    return root
+  }
+
+  root = document.createElement('div')
+  root.id = 'toast-root'
+  root.className = 'fixed right-4 top-4 z-50 flex w-[min(360px,90vw)] flex-col gap-2'
+  document.body.appendChild(root)
+  return root
+}
+
+export const showToast = (type, message) => {
+  const root = ensureToastRoot()
+  const toast = document.createElement('div')
+  const variants = {
+    success: 'border-emerald-400/40 bg-emerald-500/20 text-emerald-100',
+    error: 'border-rose-400/40 bg-rose-500/20 text-rose-100',
+    info: 'border-slate-400/40 bg-slate-500/20 text-slate-100',
+  }
+  const style = variants[type] || variants.info
+
+  toast.className = `rounded-xl border px-4 py-3 text-sm shadow-lg backdrop-blur ${style}`
+  toast.textContent = message
+
+  root.appendChild(toast)
+
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'translate-x-2')
+    toast.addEventListener('transitionend', () => toast.remove())
+  }, 2500)
+}
+
 const buildNavbar = (user) => {
   if (!navContainer) {
     return

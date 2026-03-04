@@ -1,4 +1,5 @@
 import { request, setToken, setUser } from './api.js'
+import { showToast } from './ui.js'
 
 const loginForm = document.querySelector('#login-form')
 const registerForm = document.querySelector('#register-form')
@@ -63,10 +64,12 @@ if (loginForm) {
 
       setToken(data.accessToken)
       setUser(data.user)
+      showToast('success', 'Login berhasil')
       window.location.href = '/pages/listings.html'
     } catch (error) {
       applyFieldError(loginForm)
       handleError('#login-error', error.message)
+      showToast('error', error.message)
     } finally {
       setSubmitting(loginForm, false)
     }
@@ -94,10 +97,12 @@ if (registerForm) {
         auth: false,
       })
 
+      showToast('success', 'Register berhasil, silakan login')
       window.location.href = '/pages/login.html'
     } catch (error) {
       applyFieldError(registerForm)
       handleError('#register-error', error.message)
+      showToast('error', error.message)
     } finally {
       setSubmitting(registerForm, false)
     }
