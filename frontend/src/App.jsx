@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import Navbar from './components/Navbar.jsx'
 import PrivateRoute from './components/PrivateRoute.jsx'
 import CreateListingPage from './pages/CreateListingPage.jsx'
 import ListingsPage from './pages/ListingsPage.jsx'
@@ -9,6 +10,7 @@ import { routes } from './router/routes.js'
 const App = () => {
   return (
     <BrowserRouter>
+      <Navbar />
       <Routes>
         <Route path="/" element={<Navigate to={routes.listings} replace />} />
         <Route path={routes.login} element={<LoginPage />} />
