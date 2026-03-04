@@ -47,13 +47,13 @@ if (loginForm) {
     event.preventDefault()
     handleError('#login-error', '')
     clearFieldError(loginForm)
-    setSubmitting(loginForm, true)
 
     const formData = new FormData(loginForm)
     const payload = {
       email: formData.get('email'),
       password: formData.get('password'),
     }
+    setSubmitting(loginForm, true)
 
     try {
       const data = await request('/auth/login', {
@@ -81,7 +81,6 @@ if (registerForm) {
     event.preventDefault()
     handleError('#register-error', '')
     clearFieldError(registerForm)
-    setSubmitting(registerForm, true)
 
     const formData = new FormData(registerForm)
     const payload = {
@@ -89,6 +88,7 @@ if (registerForm) {
       password: formData.get('password'),
       role: formData.get('role'),
     }
+    setSubmitting(registerForm, true)
 
     try {
       await request('/auth/register', {
