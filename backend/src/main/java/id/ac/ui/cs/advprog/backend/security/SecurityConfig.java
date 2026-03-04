@@ -36,8 +36,11 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/listings/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/listings/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/listings").hasRole("SELLER")
                 .requestMatchers(HttpMethod.POST, "/api/listings").hasRole("SELLER")
                 .anyRequest().authenticated()
             )
