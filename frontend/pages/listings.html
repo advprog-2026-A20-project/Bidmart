@@ -7,14 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="min-h-screen bg-slate-950 text-slate-100">
-    <header class="border-b border-slate-900">
-      <nav class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <a class="text-lg font-semibold" href="/pages/listings.html">Bidmart</a>
-        <div class="flex items-center gap-4 text-sm" id="nav-links"></div>
-      </nav>
-    </header>
+    <div id="navbar"></div>
 
-    <main class="mx-auto max-w-5xl px-6 py-10">
+    <main class="mx-auto flex min-h-screen max-w-5xl flex-col gap-8 px-6 py-10">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 class="text-3xl font-semibold">Listings</h1>
@@ -25,10 +20,12 @@
         </a>
       </div>
 
-      <section class="mt-8 grid gap-4 sm:grid-cols-2" id="listings-container"></section>
-      <p class="mt-6 text-sm text-slate-400" id="listings-empty"></p>
-      <p class="mt-4 text-sm text-red-400" id="listings-error"></p>
+      <section class="grid gap-4 sm:grid-cols-2" id="listings-container"></section>
+      <p class="text-sm text-slate-400" id="listings-empty"></p>
+      <p class="text-sm text-red-400" id="listings-error"></p>
     </main>
+
+    <div id="footer"></div>
 
     <script type="module" src="/assets/js/listings.js"></script>
     <script type="module" src="/assets/js/ui.js"></script>

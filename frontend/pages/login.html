@@ -7,40 +7,47 @@
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="min-h-screen bg-slate-950 text-slate-100">
-    <main class="mx-auto flex min-h-screen max-w-xl flex-col justify-center px-6">
-      <a class="text-sm text-slate-400" href="/pages/listings.html">Back to listings</a>
-      <h1 class="mt-4 text-3xl font-semibold">Login</h1>
-      <p class="mt-2 text-sm text-slate-400">Masuk untuk mengelola listing.</p>
+    <div id="navbar"></div>
 
-      <form class="mt-8 space-y-4" id="login-form">
-        <label class="flex flex-col gap-2 text-sm">
-          Email
-          <input
-            class="rounded-lg border border-slate-800 bg-slate-900 px-4 py-2"
-            type="email"
-            name="email"
-            required
-          />
-        </label>
-        <label class="flex flex-col gap-2 text-sm">
-          Password
-          <input
-            class="rounded-lg border border-slate-800 bg-slate-900 px-4 py-2"
-            type="password"
-            name="password"
-            required
-          />
-        </label>
-        <button class="w-full rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold" type="submit">
-          Login
-        </button>
-        <p class="text-sm text-red-400" id="login-error"></p>
-      </form>
-      <p class="mt-6 text-sm text-slate-400">
-        Belum punya akun?
-        <a class="text-indigo-400" href="/pages/register.html">Register</a>
-      </p>
+    <main class="mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-10">
+      <div class="mx-auto w-full max-w-md">
+        <h1 class="text-3xl font-semibold">Login</h1>
+        <p class="mt-2 text-sm text-slate-400">Masuk untuk mengelola listing.</p>
+
+        <form class="mt-8 space-y-4" id="login-form">
+          <label class="flex flex-col gap-2 text-sm">
+            Email
+            <input
+              class="rounded-lg border border-slate-800 bg-slate-900 px-4 py-2"
+              type="email"
+              name="email"
+              required
+            />
+          </label>
+          <label class="flex flex-col gap-2 text-sm">
+            Password
+            <input
+              class="rounded-lg border border-slate-800 bg-slate-900 px-4 py-2"
+              type="password"
+              name="password"
+              required
+            />
+          </label>
+          <button class="w-full rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold" type="submit">
+            Login
+          </button>
+          <p class="text-sm text-red-400" id="login-error"></p>
+        </form>
+        <p class="mt-6 text-sm text-slate-400">
+          Belum punya akun?
+          <a class="text-indigo-400" href="/pages/register.html">Register</a>
+        </p>
+      </div>
     </main>
+
+    <div id="footer"></div>
+
     <script type="module" src="/assets/js/auth.js"></script>
+    <script type="module" src="/assets/js/ui.js"></script>
   </body>
 </html>

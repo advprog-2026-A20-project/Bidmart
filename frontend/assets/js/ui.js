@@ -1,17 +1,29 @@
 import { getUser, setToken, setUser } from './api.js'
 
-const navContainer = document.querySelector('#nav-links')
+const navContainer = document.querySelector('#navbar')
+const footerContainer = document.querySelector('#footer')
 const createListingLink = document.querySelector('#create-listing-link')
 
-const buildNav = (user) => {
+const buildNavbar = (user) => {
   if (!navContainer) {
     return
   }
 
-  navContainer.innerHTML = ''
+  navContainer.innerHTML = `
+    <header class="border-b border-slate-900">
+      <nav class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-6 py-4">
+        <a class="text-lg font-semibold" href="/pages/listings.html">Bidmart</a>
+        <div class="flex items-center gap-4 text-sm" id="nav-links"></div>
+      </nav>
+    </header>
+  `
+
+  const linksContainer = navContainer.querySelector('#nav-links')
+  if (!linksContainer) {
+    return
+  }
 
   const links = []
-
   links.push({ label: 'Listings', href: '/pages/listings.html' })
 
   if (user?.role === 'SELLER') {
@@ -22,6 +34,7 @@ const buildNav = (user) => {
     links.push({ label: 'Logout', href: '#logout' })
   } else {
     links.push({ label: 'Login', href: '/pages/login.html' })
+    links.push({ label: 'Register', href: '/pages/register.html' })
   }
 
   links.forEach((link) => {
@@ -35,7 +48,7 @@ const buildNav = (user) => {
         setUser(null)
         window.location.href = '/pages/login.html'
       })
-      navContainer.appendChild(button)
+      linksContainer.appendChild(button)
       return
     }
 
@@ -43,16 +56,30 @@ const buildNav = (user) => {
     anchor.href = link.href
     anchor.textContent = link.label
     anchor.className = 'text-sm text-slate-300 hover:text-white'
-    navContainer.appendChild(anchor)
+    linksContainer.appendChild(anchor)
   })
+}
+
+const buildFooter = () => {
+  if (!footerContainer) {
+    return
+  }
+
+  footerContainer.innerHTML = `
+    <footer class="border-t border-slate-900">
+      <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-6 py-4 text-sm text-slate-400">
+        <span>Bidmart Demo</span>
+        <span>Frontend milestone</span>
+      </div>
+    </footer>
+  `
 }
 
 const user = getUser()
 
-if (createListingLink) {
-  if (user?.role !== 'SELLER') {
-    createListingLink.classList.add('hidden')
-  }
+if (createListingLink && user?.role !== 'SELLER') {
+  createListingLink.classList.add('hidden')
 }
 
-buildNav(user)
+buildNavbar(user)
+buildFooter()
