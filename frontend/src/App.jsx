@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import PrivateRoute from './components/PrivateRoute.jsx'
 import CreateListingPage from './pages/CreateListingPage.jsx'
 import ListingsPage from './pages/ListingsPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
@@ -13,7 +14,14 @@ const App = () => {
         <Route path={routes.login} element={<LoginPage />} />
         <Route path={routes.register} element={<RegisterPage />} />
         <Route path={routes.listings} element={<ListingsPage />} />
-        <Route path={routes.createListing} element={<CreateListingPage />} />
+        <Route
+          path={routes.createListing}
+          element={(
+            <PrivateRoute>
+              <CreateListingPage />
+            </PrivateRoute>
+          )}
+        />
       </Routes>
     </BrowserRouter>
   )

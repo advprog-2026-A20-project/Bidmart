@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login } from '../api/auth.js'
+import useAuth from '../hooks/useAuth.js'
 import { routes } from '../router/routes.js'
 
 const LoginPage = () => {
   const navigate = useNavigate()
+  const { setAuth } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -16,7 +18,8 @@ const LoginPage = () => {
     setIsSubmitting(true)
 
     try {
-      await login(email, password)
+      const data = await login(email, password)
+      setAuth(data.accessToken, data.user)
       navigate(routes.listings)
     } catch (err) {
       const message = err?.response?.data?.message || 'Login failed'
