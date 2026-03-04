@@ -37,7 +37,7 @@ const loadListings = async () => {
   container.innerHTML = ''
 
   try {
-    const listings = await request('/listings')
+    const listings = await request('/listings', { auth: false })
 
     if (!listings || listings.length === 0) {
       emptyState.textContent = 'Belum ada listing. Coba lagi nanti.'

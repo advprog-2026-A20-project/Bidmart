@@ -58,6 +58,7 @@ if (loginForm) {
       const data = await request('/auth/login', {
         method: 'POST',
         body: JSON.stringify(payload),
+        auth: false,
       })
 
       setToken(data.accessToken)
@@ -90,6 +91,7 @@ if (registerForm) {
       await request('/auth/register', {
         method: 'POST',
         body: JSON.stringify(payload),
+        auth: false,
       })
 
       window.location.href = '/pages/login.html'

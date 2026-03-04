@@ -19,6 +19,7 @@ if (form) {
       await request('/listings', {
         method: 'POST',
         body: JSON.stringify(payload),
+        auth: true,
       })
 
       window.location.href = '/pages/listings.html'

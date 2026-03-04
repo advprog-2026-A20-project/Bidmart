@@ -1,4 +1,4 @@
-const BASE_URL = '/api'
+const API_BASE = window.__API_URL__ || '/api'
 
 const getToken = () => localStorage.getItem('token') || ''
 
@@ -33,28 +33,37 @@ export const getUser = () => {
 
 export const request = async (path, options = {}) => {
   const headers = new Headers(options.headers || {})
+  const useAuth = options.auth === true
 
   if (options.body && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
 
-  const token = getToken()
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`)
+  if (useAuth) {
+    const token = getToken()
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`)
+    }
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
+  const response = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers,
   })
 
   const contentType = response.headers.get('content-type') || ''
-  const payload = contentType.includes('application/json')
-    ? await response.json()
-    : null
+  let payload = null
+
+  if (contentType.includes('application/json')) {
+    try {
+      payload = await response.json()
+    } catch {
+      payload = null
+    }
+  }
 
   if (!response.ok) {
-    const errorMessage = payload?.message || 'Request failed'
+    const errorMessage = payload?.message || 'Request failed. Please try again.'
     const error = new Error(errorMessage)
     error.status = response.status
     throw error
