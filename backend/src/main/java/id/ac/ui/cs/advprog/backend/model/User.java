@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
@@ -41,4 +42,11 @@ public class User {
 
     @Column(nullable = false)
     private Instant createdAt;
+
+    @PrePersist
+    void prePersist() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+    }
 }
