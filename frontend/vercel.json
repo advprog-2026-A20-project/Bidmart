@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path",
-      "destination": "https://my-api-myorg-xxxx.koyeb.app/:path"
+      "destination": "https://identical-daffy-backendtugasadprokelompoka20-0d961edc.koyeb.app/api/:path"
     }
   ],
   "headers": [
