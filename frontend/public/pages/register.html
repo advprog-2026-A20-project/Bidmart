@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register - Bidmart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <div id="navbar"></div>
+
+    <main class="mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-10">
+      <div class="mx-auto w-full max-w-md rounded-2xl bg-white p-8 text-slate-900 shadow-xl">
+        <h1 class="text-3xl font-semibold">Register</h1>
+        <p class="mt-2 text-sm text-slate-500">Buat akun buyer atau seller.</p>
+
+        <form class="mt-8 space-y-4" id="register-form">
+          <label class="flex flex-col gap-2 text-sm font-medium">
+            Email
+            <input
+              class="input-field w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100"
+              type="email"
+              name="email"
+              required
+            />
+          </label>
+          <label class="flex flex-col gap-2 text-sm font-medium">
+            Password
+            <input
+              class="input-field w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100"
+              type="password"
+              name="password"
+              required
+            />
+          </label>
+          <label class="flex flex-col gap-2 text-sm font-medium">
+            Role
+            <select
+              class="input-field w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100"
+              name="role"
+            >
+              <option value="BUYER">BUYER</option>
+              <option value="SELLER">SELLER</option>
+            </select>
+          </label>
+          <button
+            class="w-full rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:bg-indigo-300"
+            type="submit"
+            data-default-text="Register"
+          >
+            Register
+          </button>
+          <p class="text-sm text-rose-600" id="register-error"></p>
+        </form>
+        <p class="mt-6 text-sm text-slate-500">
+          Sudah punya akun?
+          <a class="text-indigo-500" href="/pages/login.html">Login</a>
+        </p>
+      </div>
+    </main>
+
+    <div id="footer"></div>
+
+    <script src="/assets/js/config.js"></script>
+    <script type="module" src="/assets/js/auth.js"></script>
+    <script type="module" src="/assets/js/ui.js"></script>
+  </body>
+</html>
