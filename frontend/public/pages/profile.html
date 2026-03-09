@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile - Bidmart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <div id="navbar"></div>
+
+    <main class="mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-10">
+      <div class="mx-auto w-full max-w-2xl rounded-2xl bg-white p-8 text-slate-900 shadow-xl">
+        <div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex items-center gap-4">
+            <div class="relative">
+              <img
+                id="profile-avatar"
+                class="hidden h-20 w-20 rounded-2xl object-cover ring-4 ring-indigo-500/20"
+                alt="Profile"
+              />
+              <div
+                id="profile-placeholder"
+                class="flex h-20 w-20 items-center justify-center rounded-2xl bg-indigo-500/10 text-2xl font-semibold text-indigo-600"
+              >
+                U
+              </div>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-slate-400">Signed in as</p>
+              <h1 class="text-2xl font-semibold" id="profile-email">-</h1>
+              <p class="mt-1 text-sm text-slate-500" id="profile-role">Role: -</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <button
+              class="inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
+              id="profile-toggle"
+              type="button"
+            >
+              Customize profile
+            </button>
+            <button
+              class="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100"
+              id="profile-logout"
+              type="button"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-8 hidden space-y-4" id="profile-customize">
+          <div>
+            <p class="text-sm font-semibold text-slate-600">Profile photo</p>
+            <p class="text-xs text-slate-500">Foto disimpan di browser (localStorage).</p>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-600" for="profile-image-input">Change profile photo</label>
+            <input
+              class="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-500 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-indigo-400"
+              type="file"
+              id="profile-image-input"
+              accept="image/*"
+            />
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <button
+              class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-100"
+              id="profile-remove-photo"
+              type="button"
+            >
+              Remove photo
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div id="footer"></div>
+
+    <script src="/assets/js/config.js"></script>
+    <script type="module" src="/assets/js/profile.js"></script>
+    <script type="module" src="/assets/js/ui.js"></script>
+  </body>
+</html>
