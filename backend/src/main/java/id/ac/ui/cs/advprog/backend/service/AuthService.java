@@ -9,6 +9,7 @@ import id.ac.ui.cs.advprog.backend.model.Role;
 import id.ac.ui.cs.advprog.backend.model.User;
 import id.ac.ui.cs.advprog.backend.repository.UserRepository;
 import id.ac.ui.cs.advprog.backend.security.JwtService;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -22,6 +23,7 @@ public class AuthService {
 
     private static final Pattern EMAIL_PATTERN =
         Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+    private static final BigDecimal DEFAULT_BUYER_STARTING_BALANCE = new BigDecimal("1000000.00");
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -66,6 +68,8 @@ public class AuthService {
             .email(request.email())
             .passwordHash(passwordEncoder.encode(request.password()))
             .role(role)
+            .availableBalance(role == Role.BUYER ? DEFAULT_BUYER_STARTING_BALANCE : BigDecimal.ZERO)
+            .heldBalance(BigDecimal.ZERO)
             .createdAt(Instant.now())
             .build();
 
@@ -89,13 +93,23 @@ public class AuthService {
         }
 
         String token = jwtService.generateToken(user);
-        UserSummary summary = new UserSummary(user.getId(), user.getEmail(), user.getRole());
+        UserSummary summary = toUserSummary(user);
         return new LoginResponse(token, summary);
     }
 
     public UserSummary me(UUID userId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
-        return new UserSummary(user.getId(), user.getEmail(), user.getRole());
+        return toUserSummary(user);
+    }
+
+    private UserSummary toUserSummary(User user) {
+        return new UserSummary(
+            user.getId(),
+            user.getEmail(),
+            user.getRole(),
+            user.getAvailableBalance(),
+            user.getHeldBalance()
+        );
     }
 }

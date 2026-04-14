@@ -47,8 +47,13 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/listings/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/listings/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/auctions/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/listings").hasRole("SELLER")
                 .requestMatchers(HttpMethod.POST, "/api/listings").hasRole("SELLER")
+                .requestMatchers(HttpMethod.POST, "/api/auctions").hasRole("SELLER")
+                .requestMatchers(HttpMethod.POST, "/api/auctions/*/activate").hasRole("SELLER")
+                .requestMatchers(HttpMethod.POST, "/api/auctions/*/close").hasRole("SELLER")
+                .requestMatchers(HttpMethod.POST, "/api/auctions/*/bids").hasRole("BUYER")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

@@ -6,4 +6,11 @@ const client = axios.create({
   baseURL,
 })
 
+if (typeof window !== 'undefined') {
+  const token = window.localStorage.getItem('accessToken')
+  if (token) {
+    client.defaults.headers.common.Authorization = `Bearer ${token}`
+  }
+}
+
 export default client
