@@ -46,6 +46,14 @@ public class AuctionService {
     private final AuctionEventPublisher auctionEventPublisher;
     private final Clock clock;
 
+    private record BidPlacementContext(
+        Auction auction,
+        User bidder,
+        Bid leadingBidBeforePlacement,
+        BigDecimal bidAmount
+    ) {
+    }
+
     public AuctionService(
         AuctionRepository auctionRepository,
         BidRepository bidRepository,
@@ -68,25 +76,8 @@ public class AuctionService {
         User seller = loadSeller(sellerId);
         Instant now = Instant.now(clock);
 
-        Listing listing = Listing.builder()
-            .title(request.title().trim())
-            .description(request.description().trim())
-            .price(normalizeMoney(request.startingPrice()))
-            .seller(seller)
-            .createdAt(now)
-            .build();
-
-        Auction auction = Auction.builder()
-            .listing(listing)
-            .status(AuctionStatus.DRAFT)
-            .startingPrice(normalizeMoney(request.startingPrice()))
-            .reservePrice(normalizeMoney(request.reservePrice()))
-            .minimumBidIncrement(normalizeMoney(defaultIncrement(request.minimumBidIncrement())))
-            .durationMinutes(defaultDuration(request.durationMinutes()))
-            .createdAt(now)
-            .nextBidSequence(1L)
-            .extensionCount(0)
-            .build();
+        Listing listing = buildListingForAuction(request, seller, now);
+        Auction auction = buildDraftAuction(request, listing, now);
 
         if (Boolean.TRUE.equals(request.activateNow())) {
             activateAuctionInternal(auction, now);
@@ -139,69 +130,22 @@ public class AuctionService {
 
     @Transactional
     public AuctionDetailResponse placeBid(UUID auctionId, BidPlaceRequest request, UUID bidderId) {
-        validateBidRequest(request);
-        User bidder = loadBuyer(bidderId);
-        Auction auction = loadAuctionForUpdate(auctionId);
         Instant now = Instant.now(clock);
-        closeAuctionIfExpired(auction, now);
-        ensureAuctionAcceptsBid(auction, bidder.getId());
-
-        Bid currentLeadingBid = bidRepository.findTopByAuctionIdOrderByAmountDescSequenceNumberAsc(auctionId)
-            .orElse(null);
-        BigDecimal bidAmount = normalizeMoney(request.amount());
-        BigDecimal nextMinimumBid = calculateNextMinimumBid(auction, currentLeadingBid);
-        if (bidAmount.compareTo(nextMinimumBid) < 0) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Bid must be at least " + nextMinimumBid);
-        }
-
-        BigDecimal additionalHoldRequired = bidAmount;
-        if (currentLeadingBid != null && Objects.equals(currentLeadingBid.getBidder().getId(), bidder.getId())) {
-            additionalHoldRequired = bidAmount.subtract(currentLeadingBid.getAmount());
-        }
-        walletGateway.holdFunds(bidder.getId(), auction.getId(), additionalHoldRequired);
-
-        Bid bid = Bid.builder()
-            .auction(auction)
-            .bidder(bidder)
-            .amount(bidAmount)
-            .sequenceNumber(auction.getNextBidSequence())
-            .submittedAt(now)
-            .build();
-        auction.setNextBidSequence(auction.getNextBidSequence() + 1);
-        bidRepository.save(bid);
-
-        auction.getListing().setPrice(bidAmount);
-        extendAuctionIfNeeded(auction, now);
-        auctionRepository.save(auction);
-
-        if (currentLeadingBid != null && !Objects.equals(currentLeadingBid.getBidder().getId(), bidder.getId())) {
-            walletGateway.releaseFunds(
-                currentLeadingBid.getBidder().getId(),
-                auction.getId(),
-                currentLeadingBid.getAmount()
-            );
-        }
-
-        auctionEventPublisher.publishBidPlaced(auction, bid, currentLeadingBid);
-        return toDetailResponse(auction);
+        BidPlacementContext context = prepareBidPlacement(auctionId, request, bidderId, now);
+        holdBidderFunds(context);
+        Bid placedBid = persistBid(context, now);
+        updateAuctionAfterBid(context.auction(), context.bidAmount(), now);
+        releasePreviousLeaderFundsIfNeeded(context);
+        auctionEventPublisher.publishBidPlaced(context.auction(), placedBid, context.leadingBidBeforePlacement());
+        return toDetailResponse(context.auction());
     }
 
     @Transactional
     public AuctionDetailResponse closeAuction(UUID auctionId, UUID sellerId) {
         Auction auction = loadAuctionForUpdate(auctionId);
         ensureSellerOwnsAuction(auction, sellerId);
-        if (!isBiddableStatus(auction.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Auction is already closed");
-        }
-
         Instant now = Instant.now(clock);
-        if (auction.getEndsAt() != null && now.isBefore(auction.getEndsAt())) {
-            throw new ResponseStatusException(
-                HttpStatus.CONFLICT,
-                "Auction cannot be closed before its scheduled end"
-            );
-        }
-
+        validateManualClosureAllowed(auction, now);
         closeAuctionInternal(auction, now);
         return toDetailResponse(auction);
     }
@@ -242,16 +186,8 @@ public class AuctionService {
         auction.setStatus(AuctionStatus.CLOSED);
         auction.setClosedAt(closedAt);
 
-        boolean reserveMet = leadingBid != null && leadingBid.getAmount().compareTo(auction.getReservePrice()) >= 0;
-        if (reserveMet) {
-            walletGateway.captureFunds(leadingBid.getBidder().getId(), auction.getId(), leadingBid.getAmount());
-            auction.setStatus(AuctionStatus.WON);
-        } else {
-            if (leadingBid != null) {
-                walletGateway.releaseFunds(leadingBid.getBidder().getId(), auction.getId(), leadingBid.getAmount());
-            }
-            auction.setStatus(AuctionStatus.UNSOLD);
-        }
+        boolean reserveMet = isReserveMet(auction, leadingBid);
+        resolveAuctionOutcome(auction, leadingBid, reserveMet);
 
         auctionRepository.save(auction);
         auctionEventPublisher.publishAuctionResolved(auction, leadingBid, reserveMet);
@@ -299,6 +235,130 @@ public class AuctionService {
             return auction.getStartingPrice();
         }
         return normalizeMoney(leadingBid.getAmount().add(auction.getMinimumBidIncrement()));
+    }
+
+    private Listing buildListingForAuction(AuctionCreateRequest request, User seller, Instant createdAt) {
+        return Listing.builder()
+            .title(request.title().trim())
+            .description(request.description().trim())
+            .price(normalizeMoney(request.startingPrice()))
+            .seller(seller)
+            .createdAt(createdAt)
+            .build();
+    }
+
+    private Auction buildDraftAuction(AuctionCreateRequest request, Listing listing, Instant createdAt) {
+        return Auction.builder()
+            .listing(listing)
+            .status(AuctionStatus.DRAFT)
+            .startingPrice(normalizeMoney(request.startingPrice()))
+            .reservePrice(normalizeMoney(request.reservePrice()))
+            .minimumBidIncrement(normalizeMoney(defaultIncrement(request.minimumBidIncrement())))
+            .durationMinutes(defaultDuration(request.durationMinutes()))
+            .createdAt(createdAt)
+            .nextBidSequence(1L)
+            .extensionCount(0)
+            .build();
+    }
+
+    private BidPlacementContext prepareBidPlacement(
+        UUID auctionId,
+        BidPlaceRequest request,
+        UUID bidderId,
+        Instant now
+    ) {
+        validateBidRequest(request);
+        User bidder = loadBuyer(bidderId);
+        Auction auction = loadAuctionForUpdate(auctionId);
+        closeAuctionIfExpired(auction, now);
+        ensureAuctionAcceptsBid(auction, bidderId);
+
+        Bid leadingBid = bidRepository.findTopByAuctionIdOrderByAmountDescSequenceNumberAsc(auctionId).orElse(null);
+        BigDecimal bidAmount = normalizeMoney(request.amount());
+        validateBidAmountAgainstMinimum(auction, leadingBid, bidAmount);
+        return new BidPlacementContext(auction, bidder, leadingBid, bidAmount);
+    }
+
+    private void validateBidAmountAgainstMinimum(Auction auction, Bid leadingBid, BigDecimal bidAmount) {
+        BigDecimal nextMinimumBid = calculateNextMinimumBid(auction, leadingBid);
+        if (bidAmount.compareTo(nextMinimumBid) < 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Bid must be at least " + nextMinimumBid);
+        }
+    }
+
+    private void holdBidderFunds(BidPlacementContext context) {
+        BigDecimal requiredHoldAmount = calculateRequiredHold(context);
+        walletGateway.holdFunds(context.bidder().getId(), context.auction().getId(), requiredHoldAmount);
+    }
+
+    private BigDecimal calculateRequiredHold(BidPlacementContext context) {
+        Bid leadingBid = context.leadingBidBeforePlacement();
+        if (leadingBid != null && Objects.equals(leadingBid.getBidder().getId(), context.bidder().getId())) {
+            return context.bidAmount().subtract(leadingBid.getAmount());
+        }
+        return context.bidAmount();
+    }
+
+    private Bid persistBid(BidPlacementContext context, Instant now) {
+        Auction auction = context.auction();
+        Bid bid = Bid.builder()
+            .auction(auction)
+            .bidder(context.bidder())
+            .amount(context.bidAmount())
+            .sequenceNumber(auction.getNextBidSequence())
+            .submittedAt(now)
+            .build();
+        auction.setNextBidSequence(auction.getNextBidSequence() + 1);
+        return bidRepository.save(bid);
+    }
+
+    private void updateAuctionAfterBid(Auction auction, BigDecimal bidAmount, Instant bidReceivedAt) {
+        auction.getListing().setPrice(bidAmount);
+        extendAuctionIfNeeded(auction, bidReceivedAt);
+        auctionRepository.save(auction);
+    }
+
+    private void releasePreviousLeaderFundsIfNeeded(BidPlacementContext context) {
+        Bid previousLeader = context.leadingBidBeforePlacement();
+        if (previousLeader == null) {
+            return;
+        }
+        if (Objects.equals(previousLeader.getBidder().getId(), context.bidder().getId())) {
+            return;
+        }
+        walletGateway.releaseFunds(
+            previousLeader.getBidder().getId(),
+            context.auction().getId(),
+            previousLeader.getAmount()
+        );
+    }
+
+    private void validateManualClosureAllowed(Auction auction, Instant now) {
+        if (!isBiddableStatus(auction.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Auction is already closed");
+        }
+        if (auction.getEndsAt() != null && now.isBefore(auction.getEndsAt())) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "Auction cannot be closed before its scheduled end"
+            );
+        }
+    }
+
+    private boolean isReserveMet(Auction auction, Bid leadingBid) {
+        return leadingBid != null && leadingBid.getAmount().compareTo(auction.getReservePrice()) >= 0;
+    }
+
+    private void resolveAuctionOutcome(Auction auction, Bid leadingBid, boolean reserveMet) {
+        if (reserveMet) {
+            walletGateway.captureFunds(leadingBid.getBidder().getId(), auction.getId(), leadingBid.getAmount());
+            auction.setStatus(AuctionStatus.WON);
+            return;
+        }
+        if (leadingBid != null) {
+            walletGateway.releaseFunds(leadingBid.getBidder().getId(), auction.getId(), leadingBid.getAmount());
+        }
+        auction.setStatus(AuctionStatus.UNSOLD);
     }
 
     private AuctionSummaryResponse toSummaryResponse(Auction auction) {
