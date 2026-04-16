@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wallet - Bidmart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <div id="navbar"></div>
+
+    <main class="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-6 py-10">
+      <section class="rounded-3xl bg-slate-900/95 p-8 shadow-2xl shadow-slate-950/30 backdrop-blur-xl border border-white/10">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="text-sm uppercase tracking-[0.35em] text-slate-400">Dompet</p>
+            <h1 class="mt-2 text-3xl font-semibold text-white">Saldo dan Ledger</h1>
+            <p class="mt-2 max-w-2xl text-sm text-slate-400">Top up saldo Anda dan lihat riwayat transaksi dompet.</p>
+          </div>
+          <div class="rounded-3xl bg-slate-950 p-5 text-center shadow-sm shadow-black/25">
+            <p class="text-xs uppercase tracking-[0.25em] text-slate-500">Saldo saat ini</p>
+            <p class="mt-2 text-4xl font-semibold text-white" id="wallet-balance">Rp 0</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid gap-8 lg:grid-cols-[1.35fr_1fr]">
+        <article class="rounded-3xl bg-slate-900/95 p-8 shadow-2xl shadow-slate-950/30 border border-white/10">
+          <h2 class="text-xl font-semibold text-white">Top Up Saldo</h2>
+          <p class="mt-2 text-sm text-slate-400">Masukkan jumlah yang ingin ditambahkan ke dompet Anda.</p>
+          <form id="topup-form" class="mt-6 space-y-4">
+            <label class="block text-sm font-medium text-slate-200">
+              Jumlah (IDR)
+              <input
+                id="topup-amount"
+                type="number"
+                min="1000"
+                step="1000"
+                class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                placeholder="50000"
+                required
+              />
+            </label>
+            <p id="wallet-error" class="text-sm text-rose-400"></p>
+            <button
+              type="submit"
+              class="inline-flex items-center justify-center rounded-2xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-400"
+            >Top Up</button>
+          </form>
+        </article>
+
+        <article class="rounded-3xl bg-slate-900/95 p-8 shadow-2xl shadow-slate-950/30 border border-white/10">
+          <h2 class="text-xl font-semibold text-white">Ringkasan</h2>
+          <p class="mt-2 text-sm text-slate-400">Saldo dapat ditambah kapan saja. Semua transaksi tersimpan di ledger.</p>
+          <div class="mt-6 space-y-3 text-sm text-slate-300">
+            <div class="flex items-center justify-between rounded-2xl bg-slate-950/70 p-4">
+              <span>Saldo terakhir</span>
+              <span id="summary-balance">Rp 0</span>
+            </div>
+            <div class="flex items-center justify-between rounded-2xl bg-slate-950/70 p-4">
+              <span>Transaksi terakhir</span>
+              <span id="summary-count">0</span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="rounded-3xl bg-slate-900/95 p-8 shadow-2xl shadow-slate-950/30 border border-white/10">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-semibold text-white">Ledger Transaksi</h2>
+            <p class="mt-2 text-sm text-slate-400">Riwayat transaksi top up dompet Anda.</p>
+          </div>
+          <div id="wallet-loading" class="text-sm text-slate-400">Loading...</div>
+        </div>
+        <div class="mt-6 overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-800 text-left text-sm text-slate-300">
+            <thead class="border-b border-slate-800 text-slate-400">
+              <tr>
+                <th class="px-4 py-3">Jenis</th>
+                <th class="px-4 py-3">Jumlah</th>
+                <th class="px-4 py-3">Saldo Akhir</th>
+                <th class="px-4 py-3">Waktu</th>
+              </tr>
+            </thead>
+            <tbody id="transactions-body" class="divide-y divide-slate-800"></tbody>
+          </table>
+          <p id="transactions-empty" class="mt-4 text-sm text-slate-500">Belum ada transaksi.</p>
+        </div>
+      </section>
+    </main>
+
+    <div id="footer"></div>
+
+    <script src="/assets/js/config.js"></script>
+    <script type="module" src="/assets/js/wallet.js"></script>
+    <script type="module" src="/assets/js/ui.js"></script>
+  </body>
+</html>

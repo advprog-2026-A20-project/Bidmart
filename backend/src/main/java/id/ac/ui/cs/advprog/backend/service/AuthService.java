@@ -5,6 +5,7 @@ import id.ac.ui.cs.advprog.backend.dto.LoginResponse;
 import id.ac.ui.cs.advprog.backend.dto.RegisterRequest;
 import id.ac.ui.cs.advprog.backend.dto.RegisterResponse;
 import id.ac.ui.cs.advprog.backend.dto.UserSummary;
+import id.ac.ui.cs.advprog.backend.service.WalletService;
 import id.ac.ui.cs.advprog.backend.model.Role;
 import id.ac.ui.cs.advprog.backend.model.User;
 import id.ac.ui.cs.advprog.backend.repository.UserRepository;
@@ -26,22 +27,25 @@ public class AuthService {
     private static final Pattern EMAIL_PATTERN =
         Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
     private static final BigDecimal DEFAULT_BUYER_STARTING_BALANCE = new BigDecimal("1000000.00");
-
+    private final WalletService walletService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final Clock clock;
+    
 
     public AuthService(
         UserRepository userRepository,
         PasswordEncoder passwordEncoder,
         JwtService jwtService,
-        Clock clock
+        Clock clock,
+        WalletService walletService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.clock = clock;
+        this.walletService = walletService;
     }
 
     public RegisterResponse register(RegisterRequest request) {
@@ -52,6 +56,7 @@ public class AuthService {
         ensureEmailNotRegistered(normalizedEmail);
 
         User savedUser = userRepository.save(buildNewUser(normalizedEmail, password, role));
+        walletService.createWalletForUser(savedUser);
         return new RegisterResponse(savedUser.getId(), savedUser.getEmail(), savedUser.getRole());
     }
 

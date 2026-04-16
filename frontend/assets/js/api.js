@@ -1,12 +1,12 @@
 const API_BASE = window.__API_URL__ || 'http://localhost:8080/api'
 
-const getToken = () => localStorage.getItem('token') || ''
+const getToken = () => localStorage.getItem('accessToken') || ''
 
 export const setToken = (token) => {
   if (token) {
-    localStorage.setItem('token', token)
+    localStorage.setItem('accessToken', token)
   } else {
-    localStorage.removeItem('token')
+    localStorage.removeItem('accessToken')
   }
 }
 

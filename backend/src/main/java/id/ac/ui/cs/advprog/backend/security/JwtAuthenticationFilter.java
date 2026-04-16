@@ -30,9 +30,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         FilterChain filterChain
     ) throws ServletException, IOException {
         String header = request.getHeader("Authorization");
+        String requestURI = request.getRequestURI();
+
         if (header != null && header.startsWith("Bearer ")
             && SecurityContextHolder.getContext().getAuthentication() == null) {
             String token = header.substring(7);
+
             if (jwtService.isValid(token)) {
                 String userId = jwtService.extractUserId(token);
                 Role role = Role.valueOf(jwtService.extractRole(token));

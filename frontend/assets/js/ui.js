@@ -88,6 +88,8 @@ const buildNavbar = (user) => {
     links.push({ label: '+ Create', href: '/pages/create-listing.html', cta: true })
   }
 
+  links.push({ label: 'Wallet', href: '/pages/wallet.html' })
+
   if (!user) {
     links.push({ label: 'Login', href: '/pages/login.html' })
     links.push({ label: 'Register', href: '/pages/register.html' })
