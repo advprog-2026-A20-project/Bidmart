@@ -9,6 +9,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
@@ -24,7 +25,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "bid")
+@Table(
+    name = "bid",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"auction_id", "sequence_number"})
+)
 public class Bid {
 
     @Id
@@ -32,8 +36,8 @@ public class Bid {
     private UUID id;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "listing_id", nullable = false)
-    private Listing listing;
+    @JoinColumn(name = "auction_id", nullable = false)
+    private Auction auction;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "bidder_id", nullable = false)
@@ -42,13 +46,16 @@ public class Bid {
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
 
+    @Column(name = "sequence_number", nullable = false)
+    private Long sequenceNumber;
+
     @Column(nullable = false)
-    private Instant createdAt;
+    private Instant submittedAt;
 
     @PrePersist
     void prePersist() {
-        if (createdAt == null) {
-            createdAt = Instant.now();
+        if (submittedAt == null) {
+            submittedAt = Instant.now();
         }
     }
 }
