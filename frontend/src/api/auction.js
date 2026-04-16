@@ -10,6 +10,11 @@ export const getAuctionDetail = async (auctionId) => {
   return response.data
 }
 
+export const getBidHistory = async (auctionId) => {
+  const response = await client.get(`/auctions/${auctionId}/bids`)
+  return response.data
+}
+
 export const createAuction = async ({
   title,
   description,
@@ -45,4 +50,3 @@ export const closeAuction = async (auctionId) => {
   const response = await client.post(`/auctions/${auctionId}/close`)
   return response.data
 }
-

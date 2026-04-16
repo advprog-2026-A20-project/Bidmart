@@ -322,6 +322,138 @@ select {
   margin-top: 1.5rem;
 }
 
+.lelang-header-panel {
+  margin-bottom: 1.25rem;
+}
+
+.lelang-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 0.9rem;
+}
+
+.lelang-header-status {
+  margin-top: 1rem;
+}
+
+.lelang-tabs-panel {
+  padding: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.lelang-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.lelang-tab {
+  border-radius: 999px;
+  border: 1px solid rgba(143, 164, 255, 0.12);
+  background: rgba(12, 17, 37, 0.72);
+  color: var(--text-muted);
+  padding: 0.55rem 0.7rem;
+  text-align: center;
+  font-size: 0.86rem;
+}
+
+.lelang-tab.active {
+  color: var(--text);
+  background: rgba(102, 117, 255, 0.18);
+  border-color: rgba(134, 146, 255, 0.22);
+}
+
+.lelang-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.1fr) minmax(280px, 0.8fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.lelang-main-panel,
+.lelang-history-panel,
+.lelang-info-panel {
+  padding: 1.4rem;
+}
+
+.lelang-cover {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 1rem;
+  border: 1px solid rgba(143, 164, 255, 0.14);
+  background:
+    radial-gradient(circle at 18% 20%, rgba(122, 129, 255, 0.28), transparent 45%),
+    radial-gradient(circle at 82% 76%, rgba(35, 150, 255, 0.22), transparent 36%),
+    rgba(13, 19, 43, 0.86);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.4rem 0 1rem;
+}
+
+.lelang-cover span {
+  font-size: clamp(2.4rem, 8vw, 3.4rem);
+  font-weight: 800;
+  color: rgba(237, 240, 255, 0.86);
+}
+
+.lelang-live-price,
+.lelang-timer {
+  border: 1px solid rgba(143, 164, 255, 0.12);
+  border-radius: 1rem;
+  padding: 0.9rem 1rem;
+  background: rgba(20, 28, 58, 0.66);
+  margin-bottom: 0.8rem;
+}
+
+.lelang-live-price span,
+.lelang-timer span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.lelang-live-price strong,
+.lelang-timer strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.15rem;
+}
+
+.lelang-extension-indicator {
+  margin: 0.35rem 0 1rem;
+  color: #91d6ff;
+  font-size: 0.9rem;
+}
+
+.lelang-disabled-message {
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(143, 164, 255, 0.11);
+  background: rgba(20, 28, 58, 0.44);
+}
+
+.lelang-success {
+  margin: 0;
+  color: var(--success);
+}
+
+.lelang-detail-list {
+  margin-bottom: 1rem;
+}
+
+.lelang-notification-toggle {
+  margin-bottom: 0.5rem;
+}
+
+.lelang-note {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
 .content-column,
 .sidebar-column {
   display: flex;
@@ -497,7 +629,9 @@ select {
   .detail-grid,
   .form-grid,
   .auction-stats,
-  .detail-list {
+  .detail-list,
+  .lelang-tabs,
+  .lelang-grid {
     grid-template-columns: 1fr;
   }
 
@@ -511,5 +645,15 @@ select {
 
   .topbar-actions {
     justify-content: flex-start;
+  }
+}
+
+@media (min-width: 881px) and (max-width: 1180px) {
+  .lelang-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lelang-info-panel {
+    grid-column: 1 / -1;
   }
 }

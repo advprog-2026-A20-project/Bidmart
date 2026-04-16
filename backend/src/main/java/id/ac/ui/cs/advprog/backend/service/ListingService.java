@@ -3,8 +3,8 @@ package id.ac.ui.cs.advprog.backend.service;
 import id.ac.ui.cs.advprog.backend.dto.ListingCreateRequest;
 import id.ac.ui.cs.advprog.backend.dto.ListingResponse;
 import id.ac.ui.cs.advprog.backend.dto.ListingUpdateRequest;
-import id.ac.ui.cs.advprog.backend.model.ListingCategory;
 import id.ac.ui.cs.advprog.backend.model.Listing;
+import id.ac.ui.cs.advprog.backend.model.ListingCategory;
 import id.ac.ui.cs.advprog.backend.model.ListingStatus;
 import id.ac.ui.cs.advprog.backend.model.Role;
 import id.ac.ui.cs.advprog.backend.model.User;
@@ -13,6 +13,7 @@ import id.ac.ui.cs.advprog.backend.repository.BidRepository;
 import id.ac.ui.cs.advprog.backend.repository.ListingRepository;
 import id.ac.ui.cs.advprog.backend.repository.UserRepository;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -33,36 +34,27 @@ public class ListingService {
     private final BidRepository bidRepository;
     private final ListingRepository listingRepository;
     private final UserRepository userRepository;
+    private final Clock clock;
 
     public ListingService(
         AuctionRepository auctionRepository,
         BidRepository bidRepository,
         ListingRepository listingRepository,
-        UserRepository userRepository
+        UserRepository userRepository,
+        Clock clock
     ) {
         this.auctionRepository = auctionRepository;
         this.bidRepository = bidRepository;
         this.listingRepository = listingRepository;
         this.userRepository = userRepository;
+        this.clock = clock;
     }
 
     public ListingResponse createListing(ListingCreateRequest request, UUID sellerId) {
-        User seller = userRepository.findById(sellerId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
-        if (seller.getRole() != Role.SELLER) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only SELLER can create listings");
-        }
-
-        Listing listing = Listing.builder()
-            .title(request.title())
-            .description(request.description())
-            .price(request.price())
-            .category(resolveCategory(request.category()))
-            .seller(seller)
-            .build();
-
-        Listing saved = listingRepository.save(listing);
-        return toResponse(saved);
+        validateCreateRequest(request);
+        User seller = loadAuthorizedSeller(sellerId);
+        Listing listing = buildListing(request, seller);
+        return toResponse(listingRepository.save(listing));
     }
 
     public List<ListingResponse> getAllListings(
@@ -101,15 +93,15 @@ public class ListingService {
         listing.setDescription(request.description());
         listing.setPrice(request.price());
         listing.setCategory(request.category() != null ? request.category() : listing.getCategory());
-        listing.setUpdatedAt(Instant.now());
+        listing.setUpdatedAt(Instant.now(clock));
         return toResponse(listingRepository.save(listing));
     }
 
     public ListingResponse cancelListing(UUID listingId, UUID sellerId) {
         Listing listing = getOwnedEditableListing(listingId, sellerId);
         listing.setStatus(ListingStatus.CANCELLED);
-        listing.setCancelledAt(Instant.now());
-        listing.setUpdatedAt(Instant.now());
+        listing.setCancelledAt(Instant.now(clock));
+        listing.setUpdatedAt(Instant.now(clock));
         return toResponse(listingRepository.save(listing));
     }
 
@@ -156,6 +148,47 @@ public class ListingService {
 
     private ListingCategory resolveCategory(ListingCategory category) {
         return category != null ? category : ListingCategory.OTHER;
+    }
+
+    private void validateCreateRequest(ListingCreateRequest request) {
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Listing request is required");
+        }
+        requireNonBlank(request.title(), "Title is required");
+        requireNonBlank(request.description(), "Description is required");
+        validatePositivePrice(request.price());
+    }
+
+    private void requireNonBlank(String value, String errorMessage) {
+        if (value == null || value.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, errorMessage);
+        }
+    }
+
+    private void validatePositivePrice(BigDecimal price) {
+        if (price == null || price.signum() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Price must be positive");
+        }
+    }
+
+    private User loadAuthorizedSeller(UUID sellerId) {
+        User seller = userRepository.findById(sellerId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+        if (seller.getRole() != Role.SELLER) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only SELLER can create listings");
+        }
+        return seller;
+    }
+
+    private Listing buildListing(ListingCreateRequest request, User seller) {
+        return Listing.builder()
+            .title(request.title().trim())
+            .description(request.description().trim())
+            .price(request.price())
+            .category(resolveCategory(request.category()))
+            .seller(seller)
+            .createdAt(Instant.now(clock))
+            .build();
     }
 
     private void validatePriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
