@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Detail Lelang - Bidmart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <div id="navbar"></div>
+
+    <main class="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 px-6 py-10">
+      <header class="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+        <p class="text-xs uppercase tracking-wide text-indigo-300">Detail Lelang</p>
+        <h1 class="mt-2 text-3xl font-semibold" id="auction-title">Memuat...</h1>
+        <p class="mt-2 text-sm text-slate-400" id="auction-description"></p>
+      </header>
+
+      <section class="grid gap-4 lg:grid-cols-3">
+        <article class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 class="text-lg font-semibold">Panel Penawaran</h2>
+          <div class="mt-4 space-y-2 text-sm">
+            <p class="text-slate-400">Status: <span class="text-slate-200" id="auction-status">-</span></p>
+            <p class="text-slate-400">Harga saat ini: <span class="text-indigo-300" id="auction-current-price">-</span></p>
+            <p class="text-slate-400">Bid minimum: <span class="text-slate-200" id="auction-minimum-bid">-</span></p>
+            <p class="text-slate-400">Berakhir: <span class="text-slate-200" id="auction-ends-at">-</span></p>
+          </div>
+
+          <form class="mt-5 space-y-3" id="bid-form">
+            <label class="flex flex-col gap-2 text-sm">
+              Nominal Bid
+              <input class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100" type="number" id="bid-amount" min="0" step="0.01" required />
+            </label>
+            <button class="w-full rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:bg-indigo-300" id="bid-submit" type="submit">
+              Ajukan Penawaran
+            </button>
+            <p class="text-xs text-rose-300" id="bid-error"></p>
+            <p class="text-xs text-emerald-300" id="bid-success"></p>
+          </form>
+        </article>
+
+        <article class="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-2">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold">Riwayat Penawaran</h2>
+            <button class="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800" id="refresh-detail" type="button">
+              Refresh
+            </button>
+          </div>
+          <div class="mt-4 space-y-3" id="bid-history"></div>
+          <p class="mt-4 hidden rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400" id="bid-history-empty">
+            Belum ada bid pada lelang ini.
+          </p>
+        </article>
+      </section>
+
+      <section class="hidden rounded-2xl border border-rose-900/40 bg-rose-950/40 p-6 text-sm text-rose-200" id="detail-error-box">
+        <p id="detail-error-message">Gagal memuat detail lelang.</p>
+      </section>
+    </main>
+
+    <div id="footer"></div>
+
+    <script src="/assets/js/config.js"></script>
+    <script type="module" src="/assets/js/lelang-detail.js"></script>
+    <script type="module" src="/assets/js/ui.js"></script>
+  </body>
+</html>

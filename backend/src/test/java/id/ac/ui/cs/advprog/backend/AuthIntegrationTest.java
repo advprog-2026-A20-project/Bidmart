@@ -3,6 +3,9 @@ package id.ac.ui.cs.advprog.backend;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import id.ac.ui.cs.advprog.backend.model.Role;
 import id.ac.ui.cs.advprog.backend.model.User;
+import id.ac.ui.cs.advprog.backend.repository.AuctionRepository;
+import id.ac.ui.cs.advprog.backend.repository.BidRepository;
+import id.ac.ui.cs.advprog.backend.repository.ListingRepository;
 import id.ac.ui.cs.advprog.backend.repository.UserRepository;
 import id.ac.ui.cs.advprog.backend.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +46,15 @@ class AuthIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private ListingRepository listingRepository;
+
+    @Autowired
+    private AuctionRepository auctionRepository;
+
+    @Autowired
+    private BidRepository bidRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -50,6 +62,9 @@ class AuthIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        bidRepository.deleteAll();
+        auctionRepository.deleteAll();
+        listingRepository.deleteAll();
         userRepository.deleteAll();
     }
 

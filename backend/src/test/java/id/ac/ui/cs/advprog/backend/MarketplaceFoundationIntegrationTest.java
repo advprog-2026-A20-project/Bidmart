@@ -1,16 +1,19 @@
 package id.ac.ui.cs.advprog.backend;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import id.ac.ui.cs.advprog.backend.model.Bid;
+import id.ac.ui.cs.advprog.backend.model.Auction;
+import id.ac.ui.cs.advprog.backend.model.AuctionStatus;
 import id.ac.ui.cs.advprog.backend.model.ListingCategory;
 import id.ac.ui.cs.advprog.backend.model.Listing;
 import id.ac.ui.cs.advprog.backend.model.Role;
 import id.ac.ui.cs.advprog.backend.model.User;
+import id.ac.ui.cs.advprog.backend.repository.AuctionRepository;
 import id.ac.ui.cs.advprog.backend.repository.BidRepository;
 import id.ac.ui.cs.advprog.backend.repository.ListingRepository;
 import id.ac.ui.cs.advprog.backend.repository.UserRepository;
 import id.ac.ui.cs.advprog.backend.security.JwtService;
 import java.math.BigDecimal;
+import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +57,9 @@ class MarketplaceFoundationIntegrationTest {
     private ListingRepository listingRepository;
 
     @Autowired
+    private AuctionRepository auctionRepository;
+
+    @Autowired
     private BidRepository bidRepository;
 
     @Autowired
@@ -65,6 +71,7 @@ class MarketplaceFoundationIntegrationTest {
     @BeforeEach
     void setUp() {
         bidRepository.deleteAll();
+        auctionRepository.deleteAll();
         listingRepository.deleteAll();
         userRepository.deleteAll();
     }
@@ -287,9 +294,8 @@ class MarketplaceFoundationIntegrationTest {
     }
 
     @Test
-    void updateListingShouldRejectWhenListingAlreadyHasBid() throws Exception {
+    void updateListingShouldRejectWhenListingAlreadyBelongsToAuction() throws Exception {
         User seller = createUser("seller@example.com", "password123", Role.SELLER);
-        User buyer = createUser("buyer@example.com", "password123", Role.BUYER);
         Listing listing = listingRepository.save(Listing.builder()
             .title("Old title")
             .description("Old description")
@@ -297,11 +303,7 @@ class MarketplaceFoundationIntegrationTest {
             .category(ListingCategory.BOOKS)
             .seller(seller)
             .build());
-        bidRepository.save(Bid.builder()
-            .listing(listing)
-            .bidder(buyer)
-            .amount(new BigDecimal("120.00"))
-            .build());
+        createAuctionFor(listing);
 
         mockMvc.perform(put("/api/listings/{listingId}", listing.getId())
                 .header("Authorization", bearerToken(seller))
@@ -315,7 +317,7 @@ class MarketplaceFoundationIntegrationTest {
                     }
                     """))
             .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.message").value("Listing cannot be modified because it already has bids"));
+            .andExpect(jsonPath("$.message").value("Listing cannot be modified because it already belongs to an auction"));
     }
 
     @Test
@@ -341,9 +343,8 @@ class MarketplaceFoundationIntegrationTest {
     }
 
     @Test
-    void cancelListingShouldRejectWhenListingAlreadyHasBid() throws Exception {
+    void cancelListingShouldRejectWhenListingAlreadyBelongsToAuction() throws Exception {
         User seller = createUser("seller@example.com", "password123", Role.SELLER);
-        User buyer = createUser("buyer@example.com", "password123", Role.BUYER);
         Listing listing = listingRepository.save(Listing.builder()
             .title("Camera")
             .description("Mirrorless camera")
@@ -351,16 +352,12 @@ class MarketplaceFoundationIntegrationTest {
             .category(ListingCategory.ELECTRONICS)
             .seller(seller)
             .build());
-        bidRepository.save(Bid.builder()
-            .listing(listing)
-            .bidder(buyer)
-            .amount(new BigDecimal("2600000.00"))
-            .build());
+        createAuctionFor(listing);
 
         mockMvc.perform(delete("/api/listings/{listingId}", listing.getId())
                 .header("Authorization", bearerToken(seller)))
             .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.message").value("Listing cannot be modified because it already has bids"));
+            .andExpect(jsonPath("$.message").value("Listing cannot be modified because it already belongs to an auction"));
     }
 
     @Test
@@ -476,6 +473,19 @@ class MarketplaceFoundationIntegrationTest {
             .email(email)
             .passwordHash(passwordEncoder.encode(rawPassword))
             .role(role)
+            .build());
+    }
+
+    private Auction createAuctionFor(Listing listing) {
+        Listing managedListing = listingRepository.findById(listing.getId()).orElseThrow();
+        return auctionRepository.save(Auction.builder()
+            .listing(managedListing)
+            .status(AuctionStatus.DRAFT)
+            .startingPrice(managedListing.getPrice())
+            .reservePrice(managedListing.getPrice())
+            .minimumBidIncrement(new BigDecimal("10.00"))
+            .durationMinutes(60L)
+            .createdAt(Instant.now())
             .build());
     }
 
