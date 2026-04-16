@@ -37,6 +37,7 @@ dependencies {
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    developmentOnly 'com.h2database:h2'
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
@@ -49,4 +50,18 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.register('bootRunLocal', org.springframework.boot.gradle.tasks.run.BootRun) {
+    group = 'application'
+    description = 'Run the application with the local H2 development profile.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'id.ac.ui.cs.advprog.backend.BackendApplication'
+
+    systemProperty 'spring.profiles.active', 'local'
+    systemProperty 'spring.datasource.url', 'jdbc:h2:mem:bidmart;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE'
+    systemProperty 'spring.datasource.driver-class-name', 'org.h2.Driver'
+    systemProperty 'spring.datasource.username', 'sa'
+    systemProperty 'spring.datasource.password', ''
+    systemProperty 'JWT_SECRET', 'local-dev-secret-please-change-32-chars'
 }
