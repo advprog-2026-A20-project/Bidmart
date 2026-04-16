@@ -9,9 +9,8 @@ import id.ac.ui.cs.advprog.backend.model.Role;
 import id.ac.ui.cs.advprog.backend.model.User;
 import id.ac.ui.cs.advprog.backend.repository.UserRepository;
 import id.ac.ui.cs.advprog.backend.security.JwtService;
-import java.time.Instant;
+import java.util.Locale;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,9 +18,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AuthService {
-
-    private static final Pattern EMAIL_PATTERN =
-        Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -38,19 +34,9 @@ public class AuthService {
     }
 
     public RegisterResponse register(RegisterRequest request) {
-        if (request.email() == null || request.email().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
-        }
-        if (!EMAIL_PATTERN.matcher(request.email()).matches()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email format is invalid");
-        }
-        if (request.password() == null || request.password().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required");
-        }
-        if (request.password().length() < 8) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must be at least 8 characters");
-        }
-        if (userRepository.findByEmail(request.email()).isPresent()) {
+        String normalizedEmail = normalizeEmail(request.email());
+
+        if (userRepository.findByEmailIgnoreCase(normalizedEmail).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
         }
 
@@ -63,10 +49,9 @@ public class AuthService {
         }
 
         User user = User.builder()
-            .email(request.email())
+            .email(normalizedEmail)
             .passwordHash(passwordEncoder.encode(request.password()))
             .role(role)
-            .createdAt(Instant.now())
             .build();
 
         User saved = userRepository.save(user);
@@ -74,14 +59,9 @@ public class AuthService {
     }
 
     public LoginResponse login(LoginRequest request) {
-        if (request.email() == null || request.email().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
-        }
-        if (request.password() == null || request.password().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required");
-        }
+        String normalizedEmail = normalizeEmail(request.email());
 
-        User user = userRepository.findByEmail(request.email())
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
@@ -97,5 +77,9 @@ public class AuthService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         return new UserSummary(user.getId(), user.getEmail(), user.getRole());
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 }

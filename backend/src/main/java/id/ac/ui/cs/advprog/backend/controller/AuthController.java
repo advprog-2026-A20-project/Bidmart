@@ -6,6 +6,7 @@ import id.ac.ui.cs.advprog.backend.dto.RegisterRequest;
 import id.ac.ui.cs.advprog.backend.dto.RegisterResponse;
 import id.ac.ui.cs.advprog.backend.dto.UserSummary;
 import id.ac.ui.cs.advprog.backend.service.AuthService;
+import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -27,12 +28,12 @@ public class AuthController {
 
     @PostMapping("/register")
     @org.springframework.web.bind.annotation.ResponseStatus(HttpStatus.CREATED)
-    public RegisterResponse register(@RequestBody RegisterRequest request) {
+    public RegisterResponse register(@Valid @RequestBody RegisterRequest request) {
         return authService.register(request);
     }
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request) {
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
     }
 
