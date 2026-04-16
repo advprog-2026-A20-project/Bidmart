@@ -9,7 +9,7 @@ public record ListingResponse(
     String title,
     String description,
     BigDecimal price,
-    String sellerEmail,
+    UUID sellerId,
     Instant createdAt
 ) {
 }
