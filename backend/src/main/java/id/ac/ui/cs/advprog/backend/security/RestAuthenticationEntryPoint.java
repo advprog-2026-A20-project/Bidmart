@@ -28,24 +28,15 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
         HttpServletResponse response,
         AuthenticationException authException
     ) throws IOException {
-        writeErrorResponse(response, request, HttpStatus.UNAUTHORIZED, "Authentication is required");
-    }
-
-    private void writeErrorResponse(
-        HttpServletResponse response,
-        HttpServletRequest request,
-        HttpStatus status,
-        String message
-    ) throws IOException {
-        response.setStatus(status.value());
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         objectMapper.writeValue(
             response.getOutputStream(),
             new ApiErrorResponse(
                 Instant.now(),
-                status.value(),
-                status.getReasonPhrase(),
-                message,
+                HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                "Authentication is required",
                 request.getRequestURI(),
                 Map.of()
             )

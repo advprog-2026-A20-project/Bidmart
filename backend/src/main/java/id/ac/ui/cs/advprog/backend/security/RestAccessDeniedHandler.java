@@ -28,15 +28,14 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
         HttpServletResponse response,
         AccessDeniedException accessDeniedException
     ) throws IOException {
-        HttpStatus status = HttpStatus.FORBIDDEN;
-        response.setStatus(status.value());
+        response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         objectMapper.writeValue(
             response.getOutputStream(),
             new ApiErrorResponse(
                 Instant.now(),
-                status.value(),
-                status.getReasonPhrase(),
+                HttpStatus.FORBIDDEN.value(),
+                HttpStatus.FORBIDDEN.getReasonPhrase(),
                 "Access denied",
                 request.getRequestURI(),
                 Map.of()

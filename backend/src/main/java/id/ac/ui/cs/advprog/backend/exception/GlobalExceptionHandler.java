@@ -6,9 +6,9 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
@@ -30,14 +30,12 @@ public class GlobalExceptionHandler {
         Map<String, String> fieldErrors = exception.getBindingResult()
             .getFieldErrors()
             .stream()
-            .collect(
-                Collectors.toMap(
-                    FieldError::getField,
-                    FieldError::getDefaultMessage,
-                    (first, second) -> first,
-                    LinkedHashMap::new
-                )
-            );
+            .collect(Collectors.toMap(
+                FieldError::getField,
+                FieldError::getDefaultMessage,
+                (first, second) -> first,
+                LinkedHashMap::new
+            ));
 
         return buildErrorResponse(
             HttpStatus.BAD_REQUEST,
@@ -56,10 +54,8 @@ public class GlobalExceptionHandler {
         String message = "Malformed request body";
         if (exception.getCause() instanceof InvalidFormatException invalidFormatException
             && !invalidFormatException.getPath().isEmpty()) {
-            String fieldName = invalidFormatException.getPath().get(0).getFieldName();
-            message = "Invalid value for field: " + fieldName;
+            message = "Invalid value for field: " + invalidFormatException.getPath().get(0).getFieldName();
         }
-
         return buildErrorResponse(HttpStatus.BAD_REQUEST, message, request, Map.of());
     }
 
