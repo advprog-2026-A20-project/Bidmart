@@ -22,6 +22,9 @@ const Navbar = () => {
         </Link>
 
         <div className="topbar-actions">
+          <NavLink className={({ isActive }) => `nav-pill${isActive ? ' active' : ''}`} to={routes.lelangHome}>
+            Lelang
+          </NavLink>
           <NavLink className={({ isActive }) => `nav-pill${isActive ? ' active' : ''}`} to={routes.listings}>
             Listings
           </NavLink>

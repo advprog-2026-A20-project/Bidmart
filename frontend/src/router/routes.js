@@ -3,6 +3,8 @@ export const routes = {
   login: '/login',
   register: '/register',
   listings: '/listings',
+  lelangHome: '/lelang',
   createListing: '/listings/new',
-  auctionDetail: (auctionId = ':auctionId') => `/listings/${auctionId}`,
+  auctionDetail: (auctionId = ':auctionId') => `/lelang/${auctionId}`,
+  legacyAuctionDetail: (auctionId = ':auctionId') => `/listings/${auctionId}`,
 }
