@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import Navbar from './components/Navbar.jsx'
 import PrivateRoute from './components/PrivateRoute.jsx'
+import AuctionDetailPage from './pages/AuctionDetailPage.jsx'
 import CreateListingPage from './pages/CreateListingPage.jsx'
 import ListingsPage from './pages/ListingsPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
@@ -16,6 +17,7 @@ const App = () => {
         <Route path={routes.login} element={<LoginPage />} />
         <Route path={routes.register} element={<RegisterPage />} />
         <Route path={routes.listings} element={<ListingsPage />} />
+        <Route path={routes.auctionDetail()} element={<AuctionDetailPage />} />
         <Route
           path={routes.createListing}
           element={(

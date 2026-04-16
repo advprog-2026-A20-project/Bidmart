@@ -8,13 +8,14 @@ import id.ac.ui.cs.advprog.backend.model.Listing;
 import id.ac.ui.cs.advprog.backend.model.ListingStatus;
 import id.ac.ui.cs.advprog.backend.model.Role;
 import id.ac.ui.cs.advprog.backend.model.User;
+import id.ac.ui.cs.advprog.backend.repository.AuctionRepository;
 import id.ac.ui.cs.advprog.backend.repository.BidRepository;
 import id.ac.ui.cs.advprog.backend.repository.ListingRepository;
 import id.ac.ui.cs.advprog.backend.repository.UserRepository;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import java.math.BigDecimal;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -28,15 +29,18 @@ public class ListingService {
     private static final int DEFAULT_PAGE_SIZE = 20;
     private static final int MAX_PAGE_SIZE = 50;
 
+    private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
     private final ListingRepository listingRepository;
     private final UserRepository userRepository;
 
     public ListingService(
+        AuctionRepository auctionRepository,
         BidRepository bidRepository,
         ListingRepository listingRepository,
         UserRepository userRepository
     ) {
+        this.auctionRepository = auctionRepository;
         this.bidRepository = bidRepository;
         this.listingRepository = listingRepository;
         this.userRepository = userRepository;
@@ -118,6 +122,12 @@ public class ListingService {
         }
         if (listing.getStatus() != ListingStatus.ACTIVE) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Listing is not active");
+        }
+        if (auctionRepository.existsByListingId(listingId)) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "Listing cannot be modified because it already belongs to an auction"
+            );
         }
         if (bidRepository.existsByListingId(listingId)) {
             throw new ResponseStatusException(
