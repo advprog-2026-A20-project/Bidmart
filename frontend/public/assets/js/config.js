@@ -1,1 +1,1 @@
-window.__API_URL__ = '/api'
+window.__API_URL__ = 'http://localhost:8080/api'

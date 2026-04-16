@@ -9,6 +9,7 @@ import id.ac.ui.cs.advprog.backend.model.Role;
 import id.ac.ui.cs.advprog.backend.model.User;
 import id.ac.ui.cs.advprog.backend.repository.UserRepository;
 import id.ac.ui.cs.advprog.backend.security.JwtService;
+import id.ac.ui.cs.advprog.backend.service.WalletService;
 import java.util.Locale;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -22,15 +23,18 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final WalletService walletService;
 
     public AuthService(
         UserRepository userRepository,
         PasswordEncoder passwordEncoder,
-        JwtService jwtService
+        JwtService jwtService,
+        WalletService walletService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.walletService = walletService;
     }
 
     public RegisterResponse register(RegisterRequest request) {
@@ -55,6 +59,7 @@ public class AuthService {
             .build();
 
         User saved = userRepository.save(user);
+        walletService.createWalletForUser(saved);
         return new RegisterResponse(saved.getId(), saved.getEmail(), saved.getRole());
     }
 

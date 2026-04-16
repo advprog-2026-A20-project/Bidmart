@@ -16,6 +16,7 @@ const Navbar = () => {
     <nav>
       <Link to={routes.listings}>Listings</Link>
       {isSeller && <Link to={routes.createListing}>Create Listing</Link>}
+      <Link to={routes.wallet}>Wallet</Link>
       {!token && <Link to={routes.login}>Login</Link>}
       {token && (
         <button type="button" onClick={handleLogout}>

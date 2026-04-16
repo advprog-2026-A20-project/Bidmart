@@ -5,6 +5,7 @@ import CreateListingPage from './pages/CreateListingPage.jsx'
 import ListingsPage from './pages/ListingsPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
+import WalletPage from './pages/WalletPage.jsx'
 import { routes } from './router/routes.js'
 
 const App = () => {
@@ -21,6 +22,14 @@ const App = () => {
           element={(
             <PrivateRoute>
               <CreateListingPage />
+            </PrivateRoute>
+          )}
+        />
+        <Route
+          path={routes.wallet}
+          element={(
+            <PrivateRoute>
+              <WalletPage />
             </PrivateRoute>
           )}
         />
