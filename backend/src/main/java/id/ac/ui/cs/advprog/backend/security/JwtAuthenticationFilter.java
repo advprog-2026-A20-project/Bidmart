@@ -1,11 +1,13 @@
 package id.ac.ui.cs.advprog.backend.security;
 
+import id.ac.ui.cs.advprog.backend.model.Role;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,12 +35,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = header.substring(7);
             if (jwtService.isValid(token)) {
                 String userId = jwtService.extractUserId(token);
-                String role = jwtService.extractRole(token);
+                Role role = Role.valueOf(jwtService.extractRole(token));
+                AuthenticatedUser authenticatedUser = new AuthenticatedUser(
+                    UUID.fromString(userId),
+                    jwtService.extractEmail(token),
+                    role
+                );
                 UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                        userId,
+                        authenticatedUser,
                         null,
-                        List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                        List.of(new SimpleGrantedAuthority("ROLE_" + role.name()))
                     );
                 authentication.setDetails(
                     new WebAuthenticationDetailsSource().buildDetails(request)

@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
-public record ListingCreateRequest(
+public record ListingUpdateRequest(
     @NotBlank(message = "Title is required")
     @Size(max = 255, message = "Title must be at most 255 characters")
     String title,

@@ -1,10 +1,7 @@
 package id.ac.ui.cs.advprog.backend.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -27,54 +24,31 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "listing")
-public class Listing {
+@Table(name = "bid")
+public class Bid {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
-    private String title;
-
-    @Column(nullable = false, length = 2000)
-    private String description;
-
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal price;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ListingCategory category;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "listing_id", nullable = false)
+    private Listing listing;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "seller_id", nullable = false)
-    @JsonIgnore
-    private User seller;
+    @JoinColumn(name = "bidder_id", nullable = false)
+    private User bidder;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ListingStatus status;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal amount;
 
     @Column(nullable = false)
     private Instant createdAt;
-
-    @Column
-    private Instant updatedAt;
-
-    @Column
-    private Instant cancelledAt;
 
     @PrePersist
     void prePersist() {
         if (createdAt == null) {
             createdAt = Instant.now();
-        }
-        if (status == null) {
-            status = ListingStatus.ACTIVE;
-        }
-        if (category == null) {
-            category = ListingCategory.OTHER;
         }
     }
 }
