@@ -12,4 +12,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface ListingRepository extends JpaRepository<Listing, UUID>, JpaSpecificationExecutor<Listing> {
     Page<Listing> findAllByStatus(ListingStatus status, Pageable pageable);
     Optional<Listing> findByIdAndStatus(UUID id, ListingStatus status);
+    long countBySellerIdAndStatus(UUID sellerId, ListingStatus status);
 }

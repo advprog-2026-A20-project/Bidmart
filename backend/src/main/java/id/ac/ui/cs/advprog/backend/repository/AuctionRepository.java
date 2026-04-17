@@ -1,7 +1,9 @@
 package id.ac.ui.cs.advprog.backend.repository;
 
 import id.ac.ui.cs.advprog.backend.model.Auction;
+import id.ac.ui.cs.advprog.backend.model.AuctionStatus;
 import jakarta.persistence.LockModeType;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,6 +15,9 @@ import org.springframework.data.repository.query.Param;
 public interface AuctionRepository extends JpaRepository<Auction, UUID> {
 
     boolean existsByListingId(UUID listingId);
+    Optional<Auction> findByListingId(UUID listingId);
+
+    long countByListingSellerIdAndStatusIn(UUID sellerId, Collection<AuctionStatus> statuses);
 
     @Query("""
         select a

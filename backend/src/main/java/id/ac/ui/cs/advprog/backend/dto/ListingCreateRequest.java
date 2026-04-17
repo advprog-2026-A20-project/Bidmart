@@ -14,6 +14,8 @@ public record ListingCreateRequest(
     @NotBlank(message = "Description is required")
     @Size(max = 2000, message = "Description must be at most 2000 characters")
     String description,
+    @Size(max = 1000, message = "Image URL must be at most 1000 characters")
+    String imageUrl,
     @NotNull(message = "Price is required")
     @DecimalMin(value = "0.01", message = "Price must be positive")
     BigDecimal price,

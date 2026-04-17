@@ -7,6 +7,7 @@ import id.ac.ui.cs.advprog.backend.model.Auction;
 import id.ac.ui.cs.advprog.backend.model.AuctionStatus;
 import id.ac.ui.cs.advprog.backend.model.Bid;
 import id.ac.ui.cs.advprog.backend.model.Listing;
+import id.ac.ui.cs.advprog.backend.model.ListingCategory;
 import id.ac.ui.cs.advprog.backend.model.Role;
 import id.ac.ui.cs.advprog.backend.model.User;
 import id.ac.ui.cs.advprog.backend.repository.AuctionEventRepository;
@@ -72,6 +73,9 @@ class AuctionServiceTest {
     private AuctionEventRepository auctionEventRepository;
 
     @Autowired
+    private InMemoryListingPriceUpdateQueue listingPriceUpdateQueue;
+
+    @Autowired
     private MutableClock mutableClock;
 
     private User seller;
@@ -80,6 +84,7 @@ class AuctionServiceTest {
 
     @BeforeEach
     void setUp() {
+        listingPriceUpdateQueue.flushPendingUpdates();
         bidRepository.deleteAll();
         auctionRepository.deleteAll();
         auctionEventRepository.deleteAll();
@@ -113,6 +118,21 @@ class AuctionServiceTest {
         assertEquals(money("880.00"), reloadedBuyer.getAvailableBalance());
         assertEquals(money("120.00"), reloadedBuyer.getHeldBalance());
         assertEquals(2, auctionEventRepository.findAll().size());
+    }
+
+    @Test
+    void placeBidUpdatesListingDisplayPriceAfterQueueIsConsumed() {
+        AuctionDetailResponse createdAuction = auctionService.createAuction(
+            auctionRequest(true, 30L, "100.00", "150.00", "10.00"),
+            seller.getId()
+        );
+
+        auctionService.placeBid(createdAuction.id(), new BidPlaceRequest(money("120.00")), buyer.getId());
+        listingPriceUpdateQueue.flushPendingUpdates();
+
+        Auction auction = auctionRepository.findById(createdAuction.id()).orElseThrow();
+        Listing listing = listingRepository.findById(auction.getListing().getId()).orElseThrow();
+        assertEquals(money("120.00"), listing.getPrice());
     }
 
     @Test
@@ -257,6 +277,8 @@ class AuctionServiceTest {
         return new AuctionCreateRequest(
             "Mechanical Keyboard",
             "Hot-swappable keyboard with custom switches",
+            "https://img.example/keyboard.jpg",
+            ListingCategory.ELECTRONICS,
             money(startingPrice),
             money(reservePrice),
             money(minimumBidIncrement),

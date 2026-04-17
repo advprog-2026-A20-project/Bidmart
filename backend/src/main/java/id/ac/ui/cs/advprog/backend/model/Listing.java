@@ -40,6 +40,9 @@ public class Listing {
     @Column(nullable = false, length = 2000)
     private String description;
 
+    @Column(length = 1000)
+    private String imageUrl;
+
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal price;
 

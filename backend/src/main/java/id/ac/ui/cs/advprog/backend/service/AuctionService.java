@@ -5,6 +5,7 @@ import id.ac.ui.cs.advprog.backend.dto.AuctionDetailResponse;
 import id.ac.ui.cs.advprog.backend.dto.AuctionSummaryResponse;
 import id.ac.ui.cs.advprog.backend.dto.BidPlaceRequest;
 import id.ac.ui.cs.advprog.backend.dto.BidResponse;
+import id.ac.ui.cs.advprog.backend.dto.ListingBidValidationResponse;
 import id.ac.ui.cs.advprog.backend.model.Auction;
 import id.ac.ui.cs.advprog.backend.model.AuctionStatus;
 import id.ac.ui.cs.advprog.backend.model.Bid;
@@ -13,7 +14,6 @@ import id.ac.ui.cs.advprog.backend.model.Role;
 import id.ac.ui.cs.advprog.backend.model.User;
 import id.ac.ui.cs.advprog.backend.repository.AuctionRepository;
 import id.ac.ui.cs.advprog.backend.repository.BidRepository;
-import id.ac.ui.cs.advprog.backend.repository.ListingRepository;
 import id.ac.ui.cs.advprog.backend.repository.UserRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -42,8 +42,9 @@ public class AuctionService {
 
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
-    private final ListingRepository listingRepository;
     private final UserRepository userRepository;
+    private final ListingService listingService;
+    private final InMemoryListingPriceUpdateQueue listingPriceUpdateQueue;
     private final WalletGateway walletGateway;
     private final AuctionEventPublisher auctionEventPublisher;
     private final Clock clock;
@@ -59,16 +60,18 @@ public class AuctionService {
     public AuctionService(
         AuctionRepository auctionRepository,
         BidRepository bidRepository,
-        ListingRepository listingRepository,
         UserRepository userRepository,
+        ListingService listingService,
+        InMemoryListingPriceUpdateQueue listingPriceUpdateQueue,
         WalletGateway walletGateway,
         AuctionEventPublisher auctionEventPublisher,
         Clock clock
     ) {
         this.auctionRepository = auctionRepository;
         this.bidRepository = bidRepository;
-        this.listingRepository = listingRepository;
         this.userRepository = userRepository;
+        this.listingService = listingService;
+        this.listingPriceUpdateQueue = listingPriceUpdateQueue;
         this.walletGateway = walletGateway;
         this.auctionEventPublisher = auctionEventPublisher;
         this.clock = clock;
@@ -80,8 +83,15 @@ public class AuctionService {
         User seller = loadSeller(sellerId);
         Instant now = Instant.now(clock);
 
-        Listing listing = buildListingForAuction(request, seller, now);
-        Listing savedListing = listingRepository.save(listing);
+        Listing savedListing = listingService.createAuctionListing(
+            request.title(),
+            request.description(),
+            request.imageUrl(),
+            normalizeMoney(request.startingPrice()),
+            request.category(),
+            seller,
+            now
+        );
         Auction auction = buildDraftAuction(request, savedListing, now);
 
         if (Boolean.TRUE.equals(request.activateNow())) {
@@ -242,16 +252,6 @@ public class AuctionService {
         return normalizeMoney(leadingBid.getAmount().add(auction.getMinimumBidIncrement()));
     }
 
-    private Listing buildListingForAuction(AuctionCreateRequest request, User seller, Instant createdAt) {
-        return Listing.builder()
-            .title(request.title().trim())
-            .description(request.description().trim())
-            .price(normalizeMoney(request.startingPrice()))
-            .seller(seller)
-            .createdAt(createdAt)
-            .build();
-    }
-
     private Auction buildDraftAuction(AuctionCreateRequest request, Listing listing, Instant createdAt) {
         return Auction.builder()
             .listing(listing)
@@ -276,6 +276,7 @@ public class AuctionService {
         User bidder = loadBuyer(bidderId);
         Auction auction = loadAuctionForUpdate(auctionId);
         closeAuctionIfExpired(auction, now);
+        validateListingAllowsBid(auction.getListing().getId());
         ensureAuctionAcceptsBid(auction, bidderId);
 
         Bid leadingBid = bidRepository.findTopByAuctionIdOrderByAmountDescSequenceNumberAsc(auctionId).orElse(null);
@@ -288,6 +289,13 @@ public class AuctionService {
         BigDecimal nextMinimumBid = calculateNextMinimumBid(auction, leadingBid);
         if (bidAmount.compareTo(nextMinimumBid) < 0) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Bid must be at least " + nextMinimumBid);
+        }
+    }
+
+    private void validateListingAllowsBid(UUID listingId) {
+        ListingBidValidationResponse validation = listingService.validateListingForBid(listingId);
+        if (!validation.biddable()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, validation.message());
         }
     }
 
@@ -318,9 +326,14 @@ public class AuctionService {
     }
 
     private void updateAuctionAfterBid(Auction auction, BigDecimal bidAmount, Instant bidReceivedAt) {
-        auction.getListing().setPrice(bidAmount);
         extendAuctionIfNeeded(auction, bidReceivedAt);
         auctionRepository.save(auction);
+        listingPriceUpdateQueue.publish(new ListingPriceUpdateMessage(
+            auction.getListing().getId(),
+            auction.getId(),
+            bidAmount,
+            bidReceivedAt
+        ));
     }
 
     private void releasePreviousLeaderFundsIfNeeded(BidPlacementContext context) {
@@ -370,6 +383,7 @@ public class AuctionService {
         Bid leadingBid = bidRepository.findTopByAuctionIdOrderByAmountDescSequenceNumberAsc(auction.getId())
             .orElse(null);
         long totalBids = bidRepository.countByAuctionId(auction.getId());
+        BigDecimal currentPrice = leadingBid == null ? auction.getListing().getPrice() : leadingBid.getAmount();
         return new AuctionSummaryResponse(
             auction.getId(),
             auction.getListing().getId(),
@@ -377,7 +391,7 @@ public class AuctionService {
             auction.getListing().getDescription(),
             auction.getListing().getSeller().getId(),
             auction.getListing().getSeller().getEmail(),
-            auction.getListing().getPrice(),
+            currentPrice,
             auction.getStartingPrice(),
             auction.getMinimumBidIncrement(),
             auction.getStatus(),
@@ -395,6 +409,7 @@ public class AuctionService {
         Bid leadingBid = selectLeadingBid(bids);
         boolean reserveMet = leadingBid != null && leadingBid.getAmount().compareTo(auction.getReservePrice()) >= 0;
         Bid winningBid = auction.getStatus() == AuctionStatus.WON ? leadingBid : null;
+        BigDecimal currentPrice = leadingBid == null ? auction.getListing().getPrice() : leadingBid.getAmount();
         return new AuctionDetailResponse(
             auction.getId(),
             auction.getListing().getId(),
@@ -402,7 +417,7 @@ public class AuctionService {
             auction.getListing().getDescription(),
             auction.getListing().getSeller().getId(),
             auction.getListing().getSeller().getEmail(),
-            auction.getListing().getPrice(),
+            currentPrice,
             auction.getStartingPrice(),
             auction.getReservePrice(),
             auction.getMinimumBidIncrement(),
