@@ -63,6 +63,44 @@ const setBidEnabled = (enabled) => {
   if (bidSubmit) bidSubmit.disabled = !enabled
 }
 
+const getMinimumBidAmount = (auction) => {
+  const nextMinimumBid = Number(auction?.nextMinimumBid)
+  if (Number.isFinite(nextMinimumBid) && nextMinimumBid > 0) {
+    return nextMinimumBid
+  }
+
+  const currentPrice = Number(auction?.currentPrice)
+  const minimumBidIncrement = Number(auction?.minimumBidIncrement)
+  if (auction?.leadingBid && Number.isFinite(currentPrice) && Number.isFinite(minimumBidIncrement)) {
+    return currentPrice + minimumBidIncrement
+  }
+
+  const startingPrice = Number(auction?.startingPrice)
+  if (Number.isFinite(startingPrice) && startingPrice > 0) {
+    return startingPrice
+  }
+
+  return Number.isFinite(currentPrice) ? currentPrice : 0
+}
+
+const syncBidInput = (auction) => {
+  if (!bidAmountInput) {
+    return
+  }
+
+  const minimumBidAmount = getMinimumBidAmount(auction)
+  if (!Number.isFinite(minimumBidAmount) || minimumBidAmount <= 0) {
+    return
+  }
+
+  bidAmountInput.min = minimumBidAmount
+
+  const currentValue = Number(bidAmountInput.value)
+  if (!Number.isFinite(currentValue) || currentValue < minimumBidAmount) {
+    bidAmountInput.value = minimumBidAmount
+  }
+}
+
 const renderHistory = (history = []) => {
   if (!bidHistoryEl || !bidHistoryEmptyEl) {
     return
@@ -75,9 +113,9 @@ const renderHistory = (history = []) => {
     const item = document.createElement('article')
     item.className = 'rounded-xl border px-4 py-3 text-sm'
     item.classList.add(
-      bid.winning
-        ? 'border-emerald-600/30 bg-emerald-950/20'
-        : 'border-slate-800 bg-slate-950',
+      ...(bid.winning
+        ? ['border-emerald-600/30', 'bg-emerald-950/20']
+        : ['border-slate-800', 'bg-slate-950']),
     )
 
     item.innerHTML = `
@@ -141,13 +179,9 @@ const loadAuctionDetail = async () => {
     descriptionEl.textContent = auction?.description || ''
     statusEl.textContent = statusLabel[auction?.status] || auction?.status || '-'
     currentPriceEl.textContent = formatPrice(auction?.currentPrice)
-    minimumBidEl.textContent = formatPrice(auction?.nextMinimumBid)
+    minimumBidEl.textContent = formatPrice(getMinimumBidAmount(auction))
     endsAtEl.textContent = formatDate(auction?.endsAt)
-
-    if (bidAmountInput) {
-      bidAmountInput.min = Number(auction?.nextMinimumBid || 0)
-      bidAmountInput.value = Number(auction?.nextMinimumBid || 0)
-    }
+    syncBidInput(auction)
 
     renderHistory(Array.isArray(history) ? history : [])
     applyBidConstraint(auction)
@@ -172,7 +206,7 @@ if (bidForm) {
     }
 
     const amount = Number(bidAmountInput?.value || 0)
-    const minimum = Number(currentAuction?.nextMinimumBid || 0)
+    const minimum = getMinimumBidAmount(currentAuction)
     const user = getUser()
 
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -202,8 +236,20 @@ if (bidForm) {
       bidSuccess.textContent = 'Bid berhasil diajukan.'
       await loadAuctionDetail()
     } catch (error) {
-      bidError.textContent = error.message || 'Gagal mengajukan bid.'
+      const message = error.message || 'Gagal mengajukan bid.'
+
+      if (error.status === 409) {
+        try {
+          await loadAuctionDetail()
+        } catch {
+          // Keep showing the server rejection even if the refresh fails.
+        }
+      }
+
       applyBidConstraint(currentAuction)
+      bidError.textContent = error.status === 409
+        ? `${message}. Bid minimum terbaru sudah dimuat ulang.`
+        : message
     } finally {
       bidSubmit.textContent = 'Ajukan Penawaran'
     }
