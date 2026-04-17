@@ -35,12 +35,8 @@ const populateCategories = async () => {
 }
 
 const setSubmitting = (isSubmitting) => {
-  if (!form) {
-    return
-  }
-
-  const button = form.querySelector('button[type="submit"]')
-  const fields = form.querySelectorAll('.input-field')
+  const button = form?.querySelector('button[type="submit"]')
+  const fields = form?.querySelectorAll('.input-field') || []
 
   if (button) {
     if (!button.dataset.defaultText) {
