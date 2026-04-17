@@ -91,11 +91,12 @@ public class ListingService {
         validatePriceRange(minPrice, maxPrice);
 
         int requestedPageSize = pageable.isPaged() ? pageable.getPageSize() : DEFAULT_PAGE_SIZE;
+        int safePageNumber = pageable.isPaged() ? Math.max(pageable.getPageNumber(), 0) : 0;
         Sort safeSort = pageable.getSort().isSorted()
             ? pageable.getSort()
             : Sort.by(Sort.Direction.DESC, "createdAt");
         Pageable safePageable = PageRequest.of(
-            Math.max(pageable.getPageNumber(), 0),
+            safePageNumber,
             Math.max(1, Math.min(requestedPageSize, MAX_PAGE_SIZE)),
             safeSort
         );
