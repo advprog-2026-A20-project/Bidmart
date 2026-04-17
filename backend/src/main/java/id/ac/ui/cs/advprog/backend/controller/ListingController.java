@@ -1,6 +1,9 @@
 package id.ac.ui.cs.advprog.backend.controller;
 
 import id.ac.ui.cs.advprog.backend.dto.ListingCreateRequest;
+import id.ac.ui.cs.advprog.backend.dto.ListingDetailResponse;
+import id.ac.ui.cs.advprog.backend.dto.ListingBidValidationResponse;
+import id.ac.ui.cs.advprog.backend.dto.ListingCategoryNodeResponse;
 import id.ac.ui.cs.advprog.backend.dto.ListingResponse;
 import id.ac.ui.cs.advprog.backend.dto.ListingUpdateRequest;
 import id.ac.ui.cs.advprog.backend.model.ListingCategory;
@@ -8,6 +11,7 @@ import id.ac.ui.cs.advprog.backend.security.AuthenticatedUser;
 import id.ac.ui.cs.advprog.backend.service.ListingService;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -52,15 +56,25 @@ public class ListingController {
         @RequestParam(required = false) ListingCategory category,
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) BigDecimal minPrice,
-        @RequestParam(required = false) BigDecimal maxPrice
+        @RequestParam(required = false) BigDecimal maxPrice,
+        @RequestParam(required = false) Instant endingAfter,
+        @RequestParam(required = false) Instant endingBefore
     ) {
-        return listingService.getAllListings(pageable, category, keyword, minPrice, maxPrice);
+        return listingService.getAllListings(
+            pageable,
+            category,
+            keyword,
+            minPrice,
+            maxPrice,
+            endingAfter,
+            endingBefore
+        );
     }
 
     @GetMapping("/{listingId}")
     @PreAuthorize("permitAll()")
-    public ListingResponse getById(@PathVariable UUID listingId) {
-        return listingService.getListingById(listingId);
+    public ListingDetailResponse getById(@PathVariable UUID listingId) {
+        return listingService.getListingDetail(listingId);
     }
 
     @GetMapping("/categories")
@@ -69,9 +83,21 @@ public class ListingController {
         return Arrays.stream(ListingCategory.values()).toList();
     }
 
+    @GetMapping("/categories/tree")
+    @PreAuthorize("permitAll()")
+    public List<ListingCategoryNodeResponse> categoryTree() {
+        return listingService.getCategoryTree();
+    }
+
+    @GetMapping("/{listingId}/validation")
+    @PreAuthorize("permitAll()")
+    public ListingBidValidationResponse validateForBid(@PathVariable UUID listingId) {
+        return listingService.validateListingForBid(listingId);
+    }
+
     @PutMapping("/{listingId}")
     @PreAuthorize("hasRole('SELLER')")
-    public ListingResponse update(
+    public ListingDetailResponse update(
         @PathVariable UUID listingId,
         @Valid @RequestBody ListingUpdateRequest request,
         @AuthenticationPrincipal AuthenticatedUser authenticatedUser
@@ -81,7 +107,7 @@ public class ListingController {
 
     @DeleteMapping("/{listingId}")
     @PreAuthorize("hasRole('SELLER')")
-    public ListingResponse cancel(
+    public ListingDetailResponse cancel(
         @PathVariable UUID listingId,
         @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {

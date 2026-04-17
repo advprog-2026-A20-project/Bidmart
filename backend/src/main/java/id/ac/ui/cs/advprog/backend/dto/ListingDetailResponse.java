@@ -1,18 +1,22 @@
 package id.ac.ui.cs.advprog.backend.dto;
 
+import id.ac.ui.cs.advprog.backend.model.AuctionStatus;
 import id.ac.ui.cs.advprog.backend.model.ListingCategory;
 import id.ac.ui.cs.advprog.backend.model.ListingStatus;
-import id.ac.ui.cs.advprog.backend.model.AuctionStatus;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
-public record ListingResponse(
+public record ListingDetailResponse(
     UUID id,
     String title,
     String description,
     String imageUrl,
     BigDecimal price,
+    BigDecimal startingPrice,
+    BigDecimal reservePrice,
+    BigDecimal minimumBidIncrement,
+    Long durationMinutes,
     ListingCategory category,
     String categoryPath,
     UUID sellerId,
@@ -20,7 +24,9 @@ public record ListingResponse(
     ListingStatus status,
     UUID auctionId,
     AuctionStatus auctionStatus,
+    Instant startsAt,
     Instant endsAt,
+    Instant closedAt,
     long totalBids,
     boolean hasBids,
     Instant createdAt,
