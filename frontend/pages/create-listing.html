@@ -3,57 +3,69 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Create Listing - Bidmart</title>
+    <title>Create Auction Listing - Bidmart</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="min-h-screen bg-slate-950 text-slate-100">
     <div id="navbar"></div>
 
-    <main class="mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-10">
-      <div class="mx-auto w-full max-w-xl rounded-2xl bg-white p-8 text-slate-900 shadow-xl">
-        <h1 class="text-3xl font-semibold">Create Listing</h1>
-        <p class="mt-2 text-sm text-slate-500">Hanya seller yang bisa membuat listing.</p>
+    <main class="mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-6 py-10">
+      <div class="mx-auto w-full max-w-3xl rounded-2xl bg-white p-8 text-slate-900 shadow-xl">
+        <h1 class="text-3xl font-semibold">Create Auction Listing</h1>
+        <p class="mt-2 text-sm text-slate-500">Buat listing lelang lengkap dengan gambar, kategori, reserve price, dan durasi.</p>
 
         <div class="mt-6 hidden rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800" id="seller-warning"></div>
 
-        <form class="mt-6 space-y-4" id="create-listing-form">
-          <label class="flex flex-col gap-2 text-sm font-medium">
+        <form class="mt-6 grid gap-4 md:grid-cols-2" id="create-listing-form">
+          <label class="flex flex-col gap-2 text-sm font-medium md:col-span-2">
             Title
-            <input
-              class="input-field w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100"
-              type="text"
-              name="title"
-              required
-            />
+            <input class="input-field w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100" type="text" name="title" required />
           </label>
-          <label class="flex flex-col gap-2 text-sm font-medium">
+
+          <label class="flex flex-col gap-2 text-sm font-medium md:col-span-2">
             Description
-            <textarea
-              class="input-field w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100"
-              name="description"
-              rows="4"
-              required
-            ></textarea>
+            <textarea class="input-field w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100" name="description" rows="4" required></textarea>
           </label>
+
+          <label class="flex flex-col gap-2 text-sm font-medium md:col-span-2">
+            Image URL
+            <input class="input-field w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100" type="url" name="imageUrl" placeholder="https://..." />
+          </label>
+
           <label class="flex flex-col gap-2 text-sm font-medium">
-            Price
-            <input
-              class="input-field w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100"
-              type="number"
-              name="price"
-              min="0"
-              step="0.01"
-              required
-            />
+            Category
+            <select class="input-field w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100" id="category" name="category"></select>
           </label>
-          <button
-            class="w-full rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:bg-indigo-300"
-            type="submit"
-            data-default-text="Create Listing"
-          >
-            Create Listing
+
+          <label class="flex flex-col gap-2 text-sm font-medium">
+            Duration (minutes)
+            <input class="input-field w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100" type="number" name="durationMinutes" min="1" step="1" value="120" required />
+          </label>
+
+          <label class="flex flex-col gap-2 text-sm font-medium">
+            Starting Price
+            <input class="input-field w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100" type="number" name="startingPrice" min="0.01" step="0.01" value="500000" required />
+          </label>
+
+          <label class="flex flex-col gap-2 text-sm font-medium">
+            Reserve Price
+            <input class="input-field w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100" type="number" name="reservePrice" min="0.01" step="0.01" value="600000" required />
+          </label>
+
+          <label class="flex flex-col gap-2 text-sm font-medium md:col-span-2">
+            Minimum Bid Increment
+            <input class="input-field w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100" type="number" name="minimumBidIncrement" min="0.01" step="0.01" value="25000" required />
+          </label>
+
+          <label class="flex items-center gap-3 text-sm font-medium md:col-span-2">
+            <input class="input-field h-4 w-4 rounded border-slate-300 text-indigo-500 focus:ring-indigo-500" type="checkbox" name="activateNow" checked />
+            Activate listing immediately
+          </label>
+
+          <button class="w-full rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:bg-indigo-300 md:col-span-2" type="submit" data-default-text="Create Auction Listing">
+            Create Auction Listing
           </button>
-          <p class="text-sm text-rose-600" id="create-listing-error"></p>
+          <p class="text-sm text-rose-600 md:col-span-2" id="create-listing-error"></p>
         </form>
       </div>
     </main>

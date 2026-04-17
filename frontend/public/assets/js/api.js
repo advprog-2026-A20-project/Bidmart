@@ -31,6 +31,21 @@ export const getUser = () => {
   }
 }
 
+export const toQueryString = (params = {}) => {
+  const searchParams = new URLSearchParams()
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === null || value === undefined || value === '') {
+      return
+    }
+
+    searchParams.set(key, value)
+  })
+
+  const query = searchParams.toString()
+  return query ? `?${query}` : ''
+}
+
 export const request = async (path, options = {}) => {
   const headers = new Headers(options.headers || {})
   const useAuth = options.auth === true
@@ -66,6 +81,7 @@ export const request = async (path, options = {}) => {
     const errorMessage = payload?.message || 'Request failed. Please try again.'
     const error = new Error(errorMessage)
     error.status = response.status
+    error.fieldErrors = payload?.fieldErrors || {}
     throw error
   }
 
