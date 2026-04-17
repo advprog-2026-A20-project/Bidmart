@@ -1,0 +1,222 @@
+.wallet-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.wallet-container h1 {
+  font-size: 2em;
+  margin-bottom: 30px;
+  text-align: center;
+  color: #333;
+}
+
+.error-message {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+/* Balance Section */
+.balance-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.balance-section h2 {
+  font-size: 1.2em;
+  margin-bottom: 15px;
+  opacity: 0.9;
+}
+
+.balance-display {
+  font-size: 2.5em;
+  font-weight: bold;
+}
+
+.balance-amount {
+  margin: 0;
+  font-size: 3em;
+}
+
+/* Top Up Section */
+.topup-section {
+  background-color: #f9f9f9;
+  padding: 25px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  border: 1px solid #e0e0e0;
+}
+
+.topup-section h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.topup-form {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95em;
+}
+
+.form-group input {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1em;
+  transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.topup-form button {
+  padding: 10px 25px;
+  background-color: #667eea;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.topup-form button:hover:not(:disabled) {
+  background-color: #5568d3;
+}
+
+.topup-form button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Transactions Section */
+.transactions-section {
+  background-color: #f9f9f9;
+  padding: 25px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.transactions-section h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.transactions-table {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+}
+
+table thead {
+  background-color: #f0f0f0;
+}
+
+table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #ddd;
+  font-size: 0.95em;
+}
+
+table td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.transaction-type {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+.transaction-type.topup {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.transaction-type.withdrawal {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.transaction-type.payment {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.transaction-type.refund {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+@media (max-width: 600px) {
+  .wallet-container {
+    padding: 15px;
+  }
+
+  .topup-form {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .topup-form button {
+    width: 100%;
+  }
+
+  .wallet-container h1 {
+    font-size: 1.5em;
+  }
+
+  .balance-amount {
+    font-size: 2em;
+  }
+
+  .transactions-table {
+    font-size: 0.85em;
+  }
+
+  table th,
+  table td {
+    padding: 8px 4px;
+  }
+}

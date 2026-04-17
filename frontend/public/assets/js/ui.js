@@ -81,7 +81,9 @@ const buildNavbar = (user) => {
   if (!linksContainer) return
 
   const links = []
+  links.push({ label: 'Lelang', href: '/pages/lelang.html' })
   links.push({ label: 'Listings', href: '/pages/listings.html' })
+  links.push({ label: 'Wallet', href: '/pages/wallet.html' })
 
   if (user?.role === 'SELLER') {
     links.push({ label: '+ Create', href: '/pages/create-listing.html', cta: true })

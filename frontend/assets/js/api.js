@@ -1,12 +1,12 @@
 const API_BASE = window.__API_URL__ || 'http://localhost:8080/api'
 
-const getToken = () => localStorage.getItem('token') || ''
+const getToken = () => localStorage.getItem('accessToken') || ''
 
 export const setToken = (token) => {
   if (token) {
-    localStorage.setItem('token', token)
+    localStorage.setItem('accessToken', token)
   } else {
-    localStorage.removeItem('token')
+    localStorage.removeItem('accessToken')
   }
 }
 
@@ -29,6 +29,21 @@ export const getUser = () => {
   } catch {
     return null
   }
+}
+
+export const toQueryString = (params = {}) => {
+  const searchParams = new URLSearchParams()
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === null || value === undefined || value === '') {
+      return
+    }
+
+    searchParams.set(key, value)
+  })
+
+  const query = searchParams.toString()
+  return query ? `?${query}` : ''
 }
 
 export const request = async (path, options = {}) => {
@@ -66,6 +81,7 @@ export const request = async (path, options = {}) => {
     const errorMessage = payload?.message || 'Request failed. Please try again.'
     const error = new Error(errorMessage)
     error.status = response.status
+    error.fieldErrors = payload?.fieldErrors || {}
     throw error
   }
 
