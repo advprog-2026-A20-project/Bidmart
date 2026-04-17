@@ -233,6 +233,23 @@ class AuctionServiceTest {
     }
 
     @Test
+    void placeBidRejectsAmountBelowNextMinimumBid() {
+        AuctionDetailResponse createdAuction = auctionService.createAuction(
+            auctionRequest(true, 30L, "100.00", "150.00", "10.00"),
+            seller.getId()
+        );
+
+        auctionService.placeBid(createdAuction.id(), new BidPlaceRequest(money("120.00")), buyer.getId());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
+            auctionService.placeBid(createdAuction.id(), new BidPlaceRequest(money("125.00")), competingBuyer.getId())
+        );
+
+        assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
+        assertEquals("Bid must be at least 130.00", exception.getReason());
+    }
+
+    @Test
     void detailUsesSequenceNumberAsDeterministicTieBreakerWhenAmountsMatch() {
         AuctionDetailResponse createdAuction = auctionService.createAuction(
             auctionRequest(true, 30L, "100.00", "150.00", "10.00"),
