@@ -1,1 +1,1 @@
-window.__API_URL__ = 'http://localhost:8080/api'
+window.__API_URL__ = 'https://identical-daffy-backendtugasadprokelompoka20-0d961edc.koyeb.app/api'
