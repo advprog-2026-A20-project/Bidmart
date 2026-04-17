@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.11'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
 
 group = 'id.ac.ui.cs.advprog'
@@ -51,6 +52,57 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy tasks.named('jacocoTestReport')
+}
+
+jacoco {
+    toolVersion = '0.8.13'
+}
+
+def listingCoverageTargets = [
+    'id/ac/ui/cs/advprog/backend/controller/ListingController.class',
+    'id/ac/ui/cs/advprog/backend/controller/PublicUserController.class',
+    'id/ac/ui/cs/advprog/backend/model/ListingCategory.class',
+    'id/ac/ui/cs/advprog/backend/service/AuctionService.class',
+    'id/ac/ui/cs/advprog/backend/service/InMemoryListingPriceUpdateQueue.class',
+    'id/ac/ui/cs/advprog/backend/service/ListingService.class'
+]
+
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+
+    classDirectories.setFrom(files(classDirectories.files.collect { directory ->
+        fileTree(dir: directory, include: listingCoverageTargets)
+    }))
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+    dependsOn tasks.named('test')
+
+    violationRules {
+        rule {
+            element = 'CLASS'
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 1.0
+            }
+        }
+    }
+
+    classDirectories.setFrom(files(classDirectories.files.collect { directory ->
+        fileTree(dir: directory, include: listingCoverageTargets)
+    }))
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('jacocoTestCoverageVerification')
 }
 
 tasks.register('bootRunLocal', org.springframework.boot.gradle.tasks.run.BootRun) {
