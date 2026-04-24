@@ -8,11 +8,11 @@ import id.ac.ui.cs.advprog.backend.dto.ListingResponse;
 import id.ac.ui.cs.advprog.backend.dto.ListingUpdateRequest;
 import id.ac.ui.cs.advprog.backend.model.ListingCategory;
 import id.ac.ui.cs.advprog.backend.security.AuthenticatedUser;
+import id.ac.ui.cs.advprog.backend.service.ListingReadGateway;
 import id.ac.ui.cs.advprog.backend.service.ListingService;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
@@ -34,9 +34,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ListingController {
 
     private final ListingService listingService;
+    private final ListingReadGateway listingReadGateway;
 
-    public ListingController(ListingService listingService) {
+    public ListingController(ListingService listingService, ListingReadGateway listingReadGateway) {
         this.listingService = listingService;
+        this.listingReadGateway = listingReadGateway;
     }
 
     @PostMapping
@@ -60,7 +62,7 @@ public class ListingController {
         @RequestParam(required = false) Instant endingAfter,
         @RequestParam(required = false) Instant endingBefore
     ) {
-        return listingService.getAllListings(
+        return listingReadGateway.list(
             pageable,
             category,
             keyword,
@@ -74,19 +76,19 @@ public class ListingController {
     @GetMapping("/{listingId}")
     @PreAuthorize("permitAll()")
     public ListingDetailResponse getById(@PathVariable UUID listingId) {
-        return listingService.getListingDetail(listingId);
+        return listingReadGateway.getById(listingId);
     }
 
     @GetMapping("/categories")
     @PreAuthorize("permitAll()")
     public List<ListingCategory> categories() {
-        return Arrays.stream(ListingCategory.values()).toList();
+        return listingReadGateway.categories();
     }
 
     @GetMapping("/categories/tree")
     @PreAuthorize("permitAll()")
     public List<ListingCategoryNodeResponse> categoryTree() {
-        return listingService.getCategoryTree();
+        return listingReadGateway.categoryTree();
     }
 
     @GetMapping("/{listingId}/validation")

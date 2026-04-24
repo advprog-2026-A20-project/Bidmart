@@ -8,12 +8,24 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-@EnableConfigurationProperties(AuctionQueryServiceProperties.class)
+@EnableConfigurationProperties({
+    AuctionQueryServiceProperties.class,
+    ListingQueryServiceProperties.class
+})
 public class ExternalServiceClientConfig {
 
     @Bean
     @Qualifier("auctionQueryRestTemplate")
     public RestTemplate auctionQueryRestTemplate(AuctionQueryServiceProperties properties) {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(properties.getConnectTimeoutMs());
+        requestFactory.setReadTimeout(properties.getReadTimeoutMs());
+        return new RestTemplate(requestFactory);
+    }
+
+    @Bean
+    @Qualifier("listingQueryRestTemplate")
+    public RestTemplate listingQueryRestTemplate(ListingQueryServiceProperties properties) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(properties.getConnectTimeoutMs());
         requestFactory.setReadTimeout(properties.getReadTimeoutMs());

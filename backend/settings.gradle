@@ -1,2 +1,3 @@
 rootProject.name = 'backend'
 include 'auction-query-service'
+include 'listing-query-service'
