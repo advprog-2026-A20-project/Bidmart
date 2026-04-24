@@ -6,6 +6,7 @@ import id.ac.ui.cs.advprog.backend.dto.AuctionSummaryResponse;
 import id.ac.ui.cs.advprog.backend.dto.BidPlaceRequest;
 import id.ac.ui.cs.advprog.backend.dto.BidResponse;
 import id.ac.ui.cs.advprog.backend.security.AuthenticatedUser;
+import id.ac.ui.cs.advprog.backend.service.AuctionReadGateway;
 import id.ac.ui.cs.advprog.backend.service.AuctionService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -26,9 +27,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuctionController {
 
     private final AuctionService auctionService;
+    private final AuctionReadGateway auctionReadGateway;
 
-    public AuctionController(AuctionService auctionService) {
+    public AuctionController(AuctionService auctionService, AuctionReadGateway auctionReadGateway) {
         this.auctionService = auctionService;
+        this.auctionReadGateway = auctionReadGateway;
     }
 
     @PostMapping
@@ -44,19 +47,19 @@ public class AuctionController {
     @GetMapping
     @PreAuthorize("permitAll()")
     public List<AuctionSummaryResponse> listAuctions() {
-        return auctionService.listAuctions();
+        return auctionReadGateway.listAuctions();
     }
 
     @GetMapping("/{auctionId}")
     @PreAuthorize("permitAll()")
     public AuctionDetailResponse getAuctionDetail(@PathVariable UUID auctionId) {
-        return auctionService.getAuctionDetail(auctionId);
+        return auctionReadGateway.getAuctionDetail(auctionId);
     }
 
     @GetMapping("/{auctionId}/bids")
     @PreAuthorize("permitAll()")
     public List<BidResponse> getBidHistory(@PathVariable UUID auctionId) {
-        return auctionService.getBidHistory(auctionId);
+        return auctionReadGateway.getBidHistory(auctionId);
     }
 
     @PostMapping("/{auctionId}/activate")

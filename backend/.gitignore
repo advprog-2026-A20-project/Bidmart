@@ -40,3 +40,8 @@ out/
 .env
 backend/.env
 .env.*
+
+# Internal migration notes (not for shared branch)
+docs/microservices-migration.md
+deployment/PRODUCTION-ROLLOUT.md
+auction-query-service/deployment/STAGING-CHECKLIST.md
