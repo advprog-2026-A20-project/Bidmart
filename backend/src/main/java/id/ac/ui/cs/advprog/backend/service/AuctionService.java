@@ -286,7 +286,7 @@ public class AuctionService {
     }
 
     private void validateListingAllowsBid(UUID listingId) {
-        ListingBidValidationResponse validation = listingService.validateListingForBid(listingId);
+        ListingBidValidationResponse validation = listingGateway.validateListingForBid(listingId);
         if (!validation.biddable()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, validation.message());
         }
@@ -322,12 +322,12 @@ public class AuctionService {
         listingGateway.updateCurrentPrice(auction.getListing(), bidAmount);
         extendAuctionIfNeeded(auction, bidReceivedAt);
         auctionRepository.save(auction);
-        listingPriceUpdateQueue.publish(new ListingPriceUpdateMessage(
+        listingGateway.publishCurrentPriceUpdate(
             auction.getListing().getId(),
             auction.getId(),
             bidAmount,
             bidReceivedAt
-        ));
+        );
     }
 
     private void releasePreviousLeaderFundsIfNeeded(BidPlacementContext context) {
