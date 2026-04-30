@@ -10,11 +10,9 @@ import id.ac.ui.cs.advprog.backend.model.Auction;
 import id.ac.ui.cs.advprog.backend.model.AuctionStatus;
 import id.ac.ui.cs.advprog.backend.model.Bid;
 import id.ac.ui.cs.advprog.backend.model.Listing;
-import id.ac.ui.cs.advprog.backend.model.Role;
 import id.ac.ui.cs.advprog.backend.model.User;
 import id.ac.ui.cs.advprog.backend.repository.AuctionRepository;
 import id.ac.ui.cs.advprog.backend.repository.BidRepository;
-import id.ac.ui.cs.advprog.backend.repository.UserRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
@@ -42,9 +40,8 @@ public class AuctionService {
 
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
-    private final UserRepository userRepository;
-    private final ListingService listingService;
-    private final InMemoryListingPriceUpdateQueue listingPriceUpdateQueue;
+    private final ListingGateway listingGateway;
+    private final UserGateway userGateway;
     private final WalletGateway walletGateway;
     private final AuctionEventPublisher auctionEventPublisher;
     private final Clock clock;
@@ -60,18 +57,16 @@ public class AuctionService {
     public AuctionService(
         AuctionRepository auctionRepository,
         BidRepository bidRepository,
-        UserRepository userRepository,
-        ListingService listingService,
-        InMemoryListingPriceUpdateQueue listingPriceUpdateQueue,
+        ListingGateway listingGateway,
+        UserGateway userGateway,
         WalletGateway walletGateway,
         AuctionEventPublisher auctionEventPublisher,
         Clock clock
     ) {
         this.auctionRepository = auctionRepository;
         this.bidRepository = bidRepository;
-        this.userRepository = userRepository;
-        this.listingService = listingService;
-        this.listingPriceUpdateQueue = listingPriceUpdateQueue;
+        this.listingGateway = listingGateway;
+        this.userGateway = userGateway;
         this.walletGateway = walletGateway;
         this.auctionEventPublisher = auctionEventPublisher;
         this.clock = clock;
@@ -80,15 +75,13 @@ public class AuctionService {
     @Transactional
     public AuctionDetailResponse createAuction(AuctionCreateRequest request, UUID sellerId) {
         validateAuctionRequest(request);
-        User seller = loadSeller(sellerId);
+        User seller = userGateway.requireSeller(sellerId);
         Instant now = Instant.now(clock);
 
-        Listing savedListing = listingService.createAuctionListing(
-            request.title(),
-            request.description(),
-            request.imageUrl(),
+        Listing savedListing = listingGateway.createAuctionListing(
+            request.title().trim(),
+            request.description().trim(),
             normalizeMoney(request.startingPrice()),
-            request.category(),
             seller,
             now
         );
@@ -273,7 +266,7 @@ public class AuctionService {
         Instant now
     ) {
         validateBidRequest(request);
-        User bidder = loadBuyer(bidderId);
+        User bidder = userGateway.requireBuyer(bidderId);
         Auction auction = loadAuctionForUpdate(auctionId);
         closeAuctionIfExpired(auction, now);
         validateListingAllowsBid(auction.getListing().getId());
@@ -326,6 +319,7 @@ public class AuctionService {
     }
 
     private void updateAuctionAfterBid(Auction auction, BigDecimal bidAmount, Instant bidReceivedAt) {
+        listingGateway.updateCurrentPrice(auction.getListing(), bidAmount);
         extendAuctionIfNeeded(auction, bidReceivedAt);
         auctionRepository.save(auction);
         listingPriceUpdateQueue.publish(new ListingPriceUpdateMessage(
@@ -469,26 +463,8 @@ public class AuctionService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Auction not found"));
     }
 
-    private User loadSeller(UUID sellerId) {
-        User seller = userRepository.findById(sellerId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
-        if (seller.getRole() != Role.SELLER) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only SELLER can manage auctions");
-        }
-        return seller;
-    }
-
-    private User loadBuyer(UUID buyerId) {
-        User buyer = userRepository.findById(buyerId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
-        if (buyer.getRole() != Role.BUYER) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only BUYER can place bids");
-        }
-        return buyer;
-    }
-
     private void ensureSellerOwnsAuction(Auction auction, UUID sellerId) {
-        loadSeller(sellerId);
+        userGateway.requireSeller(sellerId);
         if (!Objects.equals(auction.getListing().getSeller().getId(), sellerId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the seller can manage this auction");
         }

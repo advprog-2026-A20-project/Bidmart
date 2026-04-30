@@ -7,6 +7,8 @@ import id.ac.ui.cs.advprog.backend.repository.AuctionRepository;
 import id.ac.ui.cs.advprog.backend.repository.BidRepository;
 import id.ac.ui.cs.advprog.backend.repository.ListingRepository;
 import id.ac.ui.cs.advprog.backend.repository.UserRepository;
+import id.ac.ui.cs.advprog.backend.repository.WalletRepository;
+import id.ac.ui.cs.advprog.backend.repository.WalletTransactionRepository;
 import id.ac.ui.cs.advprog.backend.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +48,12 @@ class AuthIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private WalletRepository walletRepository;
+
+    @Autowired
+    private WalletTransactionRepository walletTransactionRepository;
+
+    @Autowired
     private ListingRepository listingRepository;
 
     @Autowired
@@ -65,6 +73,8 @@ class AuthIntegrationTest {
         bidRepository.deleteAll();
         auctionRepository.deleteAll();
         listingRepository.deleteAll();
+        walletTransactionRepository.deleteAll();
+        walletRepository.deleteAll();
         userRepository.deleteAll();
     }
 

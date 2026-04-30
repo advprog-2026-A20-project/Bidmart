@@ -38,8 +38,10 @@ public class WalletService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        Wallet wallet = walletRepository.findByUserId(userId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet not found"));
+        Wallet wallet = syncWalletBalance(
+            findOrCreateWallet(user),
+            defaultAmount(user.getAvailableBalance())
+        );
 
         return new WalletResponse(wallet.getId(), wallet.getBalance(), wallet.getUser().getId());
     }
@@ -52,20 +54,11 @@ public class WalletService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        Wallet wallet = walletRepository.findByUserId(userId)
-            .orElse(null);
+        BigDecimal updatedAvailableBalance = defaultAmount(user.getAvailableBalance()).add(request.amount());
+        user.setAvailableBalance(updatedAvailableBalance);
+        userRepository.save(user);
 
-        if (wallet == null) {
-            wallet = Wallet.builder()
-                .user(user)
-                .balance(request.amount())
-                .build();
-            wallet = walletRepository.save(wallet);
-        } else {
-            wallet.setBalance(wallet.getBalance().add(request.amount()));
-            wallet.setUpdatedAt(Instant.now());
-            wallet = walletRepository.save(wallet);
-        }
+        Wallet wallet = syncWalletBalance(findOrCreateWallet(user), updatedAvailableBalance);
 
         // Record transaction
         WalletTransaction transaction = WalletTransaction.builder()
@@ -106,9 +99,32 @@ public class WalletService {
         if (existingWallet.isEmpty()) {
             Wallet wallet = Wallet.builder()
                 .user(user)
-                .balance(BigDecimal.ZERO)
+                .balance(defaultAmount(user.getAvailableBalance()))
                 .build();
             walletRepository.save(wallet);
         }
+    }
+
+    private Wallet findOrCreateWallet(User user) {
+        return walletRepository.findByUserId(user.getId())
+            .orElseGet(() -> walletRepository.save(Wallet.builder()
+                .user(user)
+                .balance(defaultAmount(user.getAvailableBalance()))
+                .build()));
+    }
+
+    private Wallet syncWalletBalance(Wallet wallet, BigDecimal sourceBalance) {
+        BigDecimal walletBalance = defaultAmount(wallet.getBalance());
+        if (walletBalance.compareTo(sourceBalance) == 0) {
+            return wallet;
+        }
+
+        wallet.setBalance(sourceBalance);
+        wallet.setUpdatedAt(Instant.now());
+        return walletRepository.save(wallet);
+    }
+
+    private BigDecimal defaultAmount(BigDecimal amount) {
+        return amount == null ? BigDecimal.ZERO : amount;
     }
 }
