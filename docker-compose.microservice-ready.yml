@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: bidmart
+      POSTGRES_USER: bidmart
+      POSTGRES_PASSWORD: bidmart
+    ports:
+      - "5432:5432"
+    volumes:
+      - bidmart-postgres:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      PORT: 8080
+      SPRING_PROFILES_ACTIVE: supabase
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bidmart
+      SPRING_DATASOURCE_USERNAME: bidmart
+      SPRING_DATASOURCE_PASSWORD: bidmart
+      JWT_SECRET: replace-with-at-least-32-chars
+      BIDMART_SERVICES_MODE: local
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+  # Future extraction placeholders only. They are intentionally disabled so this
+  # compose file still runs the current monolith without fake service images.
+  # When bidding is extracted, set BIDMART_SERVICES_MODE=remote on backend and
+  # add real user-service, listing-service, and wallet-service definitions.
+
+volumes:
+  bidmart-postgres:

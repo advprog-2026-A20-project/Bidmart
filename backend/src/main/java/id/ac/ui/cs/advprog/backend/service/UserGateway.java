@@ -1,11 +1,13 @@
 package id.ac.ui.cs.advprog.backend.service;
 
-import id.ac.ui.cs.advprog.backend.model.User;
+import id.ac.ui.cs.advprog.backend.dto.UserProfileDto;
 import java.util.UUID;
 
 public interface UserGateway {
 
-    User requireSeller(UUID sellerId);
+    UserProfileDto getUserProfile(UUID userId);
 
-    User requireBuyer(UUID buyerId);
+    UserProfileDto requireSeller(UUID sellerId);
+
+    UserProfileDto requireBuyer(UUID buyerId);
 }

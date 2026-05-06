@@ -479,7 +479,12 @@ class MarketplaceFoundationIntegrationTest {
     private Auction createAuctionFor(Listing listing) {
         Listing managedListing = listingRepository.findById(listing.getId()).orElseThrow();
         return auctionRepository.save(Auction.builder()
-            .listing(managedListing)
+            .listingId(managedListing.getId())
+            .sellerId(managedListing.getSeller().getId())
+            .sellerEmail(managedListing.getSeller().getEmail())
+            .title(managedListing.getTitle())
+            .description(managedListing.getDescription())
+            .currentPrice(managedListing.getPrice())
             .status(AuctionStatus.DRAFT)
             .startingPrice(managedListing.getPrice())
             .reservePrice(managedListing.getPrice())

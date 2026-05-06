@@ -6,7 +6,6 @@ import id.ac.ui.cs.advprog.backend.dto.BidPlaceRequest;
 import id.ac.ui.cs.advprog.backend.model.Auction;
 import id.ac.ui.cs.advprog.backend.model.AuctionStatus;
 import id.ac.ui.cs.advprog.backend.model.Bid;
-import id.ac.ui.cs.advprog.backend.model.Listing;
 import id.ac.ui.cs.advprog.backend.model.Role;
 import id.ac.ui.cs.advprog.backend.model.User;
 import id.ac.ui.cs.advprog.backend.repository.AuctionEventRepository;
@@ -220,21 +219,22 @@ class AuctionServiceTest {
         );
 
         Auction auction = auctionRepository.findById(createdAuction.id()).orElseThrow();
-        Listing listing = auction.getListing();
-        listing.setPrice(money("150.00"));
+        auction.setCurrentPrice(money("150.00"));
         auction.setNextBidSequence(3L);
         auctionRepository.save(auction);
 
         bidRepository.save(Bid.builder()
             .auction(auction)
-            .bidder(buyer)
+            .bidderId(buyer.getId())
+            .bidderEmail(buyer.getEmail())
             .amount(money("150.00"))
             .sequenceNumber(1L)
             .submittedAt(BASE_TIME.plusSeconds(10))
             .build());
         bidRepository.save(Bid.builder()
             .auction(auction)
-            .bidder(competingBuyer)
+            .bidderId(competingBuyer.getId())
+            .bidderEmail(competingBuyer.getEmail())
             .amount(money("150.00"))
             .sequenceNumber(2L)
             .submittedAt(BASE_TIME.plusSeconds(11))

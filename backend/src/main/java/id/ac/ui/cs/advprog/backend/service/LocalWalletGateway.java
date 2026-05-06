@@ -1,15 +1,21 @@
 package id.ac.ui.cs.advprog.backend.service;
 
+import id.ac.ui.cs.advprog.backend.dto.WalletCaptureRequest;
+import id.ac.ui.cs.advprog.backend.dto.WalletHoldRequest;
+import id.ac.ui.cs.advprog.backend.dto.WalletHoldResponse;
+import id.ac.ui.cs.advprog.backend.dto.WalletReleaseRequest;
 import id.ac.ui.cs.advprog.backend.model.User;
 import id.ac.ui.cs.advprog.backend.repository.UserRepository;
 import java.math.BigDecimal;
 import java.util.UUID;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
+@ConditionalOnProperty(name = "bidmart.services.mode", havingValue = "local", matchIfMissing = true)
 public class LocalWalletGateway implements WalletGateway {
 
     private final UserRepository userRepository;
@@ -20,39 +26,47 @@ public class LocalWalletGateway implements WalletGateway {
 
     @Override
     @Transactional
-    public void holdFunds(UUID userId, UUID auctionId, BigDecimal amount) {
-        BigDecimal operationAmount = sanitizeAmount(amount);
+    public WalletHoldResponse holdFunds(WalletHoldRequest request) {
+        BigDecimal operationAmount = sanitizeAmount(request.amount());
         if (isNoop(operationAmount)) {
-            return;
+            return new WalletHoldResponse(reservationId(request.userId(), request.auctionId()), request.userId(),
+                request.auctionId(), operationAmount, "NOOP");
         }
 
-        User user = loadUser(userId);
+        User user = loadUser(request.userId());
         applyHold(user, operationAmount);
         persist(user);
+        return new WalletHoldResponse(
+            reservationId(request.userId(), request.auctionId()),
+            request.userId(),
+            request.auctionId(),
+            operationAmount,
+            "HELD"
+        );
     }
 
     @Override
     @Transactional
-    public void releaseFunds(UUID userId, UUID auctionId, BigDecimal amount) {
-        BigDecimal operationAmount = sanitizeAmount(amount);
+    public void releaseFunds(WalletReleaseRequest request) {
+        BigDecimal operationAmount = sanitizeAmount(request.amount());
         if (isNoop(operationAmount)) {
             return;
         }
 
-        User user = loadUser(userId);
+        User user = loadUser(request.userId());
         applyRelease(user, operationAmount);
         persist(user);
     }
 
     @Override
     @Transactional
-    public void captureFunds(UUID userId, UUID auctionId, BigDecimal amount) {
-        BigDecimal operationAmount = sanitizeAmount(amount);
+    public void captureFunds(WalletCaptureRequest request) {
+        BigDecimal operationAmount = sanitizeAmount(request.amount());
         if (isNoop(operationAmount)) {
             return;
         }
 
-        User user = loadUser(userId);
+        User user = loadUser(request.userId());
         applyCapture(user, operationAmount);
         persist(user);
     }
@@ -107,5 +121,9 @@ public class LocalWalletGateway implements WalletGateway {
             return BigDecimal.ZERO;
         }
         return amount;
+    }
+
+    private String reservationId(UUID userId, UUID auctionId) {
+        return auctionId + ":" + userId;
     }
 }

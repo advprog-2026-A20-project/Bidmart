@@ -28,7 +28,7 @@ public class DatabaseAuctionEventPublisher implements AuctionEventPublisher {
     public void publishAuctionActivated(Auction auction) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("auctionId", auction.getId());
-        payload.put("listingId", auction.getListing().getId());
+        payload.put("listingId", auction.getListingId());
         payload.put("status", auction.getStatus().name());
         payload.put("startsAt", auction.getStartsAt());
         payload.put("endsAt", auction.getEndsAt());
@@ -39,13 +39,13 @@ public class DatabaseAuctionEventPublisher implements AuctionEventPublisher {
     public void publishBidPlaced(Auction auction, Bid bid, Bid previousLeadingBid) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("auctionId", auction.getId());
-        payload.put("listingId", auction.getListing().getId());
+        payload.put("listingId", auction.getListingId());
         payload.put("bidId", bid.getId());
-        payload.put("bidderId", bid.getBidder().getId());
+        payload.put("bidderId", bid.getBidderId());
         payload.put("amount", bid.getAmount());
         payload.put("sequenceNumber", bid.getSequenceNumber());
         payload.put("submittedAt", bid.getSubmittedAt());
-        payload.put("previousLeaderId", previousLeadingBid == null ? null : previousLeadingBid.getBidder().getId());
+        payload.put("previousLeaderId", previousLeadingBid == null ? null : previousLeadingBid.getBidderId());
         payload.put("previousLeaderBidId", previousLeadingBid == null ? null : previousLeadingBid.getId());
         persistEvent(auction, "BidPlaced", payload);
     }
@@ -54,12 +54,12 @@ public class DatabaseAuctionEventPublisher implements AuctionEventPublisher {
     public void publishAuctionResolved(Auction auction, Bid winningBid, boolean reserveMet) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("auctionId", auction.getId());
-        payload.put("listingId", auction.getListing().getId());
+        payload.put("listingId", auction.getListingId());
         payload.put("status", auction.getStatus().name());
         payload.put("reserveMet", reserveMet);
         payload.put("closedAt", auction.getClosedAt());
         payload.put("winningBidId", winningBid == null ? null : winningBid.getId());
-        payload.put("winnerId", winningBid == null ? null : winningBid.getBidder().getId());
+        payload.put("winnerId", winningBid == null ? null : winningBid.getBidderId());
         payload.put("winningAmount", winningBid == null ? null : winningBid.getAmount());
         String eventType = reserveMet ? "WinnerDetermined" : "AuctionUnsold";
         persistEvent(auction, eventType, payload);
@@ -77,4 +77,3 @@ public class DatabaseAuctionEventPublisher implements AuctionEventPublisher {
         }
     }
 }
-

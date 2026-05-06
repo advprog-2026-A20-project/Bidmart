@@ -7,8 +7,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
@@ -33,9 +31,23 @@ public class Auction {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "listing_id", nullable = false, unique = true)
-    private Listing listing;
+    @Column(name = "listing_id", nullable = false, unique = true)
+    private UUID listingId;
+
+    @Column(nullable = false)
+    private UUID sellerId;
+
+    @Column(nullable = false)
+    private String sellerEmail;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false, length = 2000)
+    private String description;
+
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal currentPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -1,11 +1,15 @@
 package id.ac.ui.cs.advprog.backend.service;
 
+import id.ac.ui.cs.advprog.backend.dto.AuctionListingCreateRequest;
+import id.ac.ui.cs.advprog.backend.dto.ListingSnapshotDto;
 import id.ac.ui.cs.advprog.backend.model.Listing;
 import id.ac.ui.cs.advprog.backend.model.Role;
 import id.ac.ui.cs.advprog.backend.model.User;
 import id.ac.ui.cs.advprog.backend.repository.ListingRepository;
+import id.ac.ui.cs.advprog.backend.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +20,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,6 +29,9 @@ class LocalListingGatewayTest {
 
     @Mock
     private ListingRepository listingRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @Captor
     private ArgumentCaptor<Listing> listingCaptor;
@@ -41,34 +47,41 @@ class LocalListingGatewayTest {
             .email("seller@bidmart.test")
             .build();
         Instant createdAt = Instant.parse("2026-04-25T00:00:00Z");
+        when(userRepository.findById(seller.getId())).thenReturn(Optional.of(seller));
         when(listingRepository.save(any(Listing.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Listing savedListing = localListingGateway.createAuctionListing(
+        ListingSnapshotDto savedListing = localListingGateway.createAuctionListing(new AuctionListingCreateRequest(
             "Mechanical Keyboard",
             "Hot-swappable keyboard",
             new BigDecimal("100.00"),
-            seller,
+            seller.getId(),
             createdAt
-        );
+        ));
 
         verify(listingRepository).save(listingCaptor.capture());
         Listing persistedListing = listingCaptor.getValue();
         assertEquals("Mechanical Keyboard", persistedListing.getTitle());
         assertEquals("Hot-swappable keyboard", persistedListing.getDescription());
         assertEquals(new BigDecimal("100.00"), persistedListing.getPrice());
-        assertSame(seller, persistedListing.getSeller());
+        assertEquals(seller, persistedListing.getSeller());
         assertEquals(createdAt, persistedListing.getCreatedAt());
-        assertSame(persistedListing, savedListing);
+        assertEquals(persistedListing.getId(), savedListing.id());
+        assertEquals(seller.getId(), savedListing.sellerId());
+        assertEquals("seller@bidmart.test", savedListing.sellerEmail());
     }
 
     @Test
     void updateCurrentPriceMutatesListingPrice() {
+        UUID listingId = UUID.randomUUID();
         Listing listing = Listing.builder()
+            .id(listingId)
             .price(new BigDecimal("100.00"))
             .build();
+        when(listingRepository.findById(listingId)).thenReturn(Optional.of(listing));
 
-        localListingGateway.updateCurrentPrice(listing, new BigDecimal("125.00"));
+        localListingGateway.updateAuctionPrice(listingId, new BigDecimal("125.00"));
 
         assertEquals(new BigDecimal("125.00"), listing.getPrice());
+        verify(listingRepository).save(listing);
     }
 }

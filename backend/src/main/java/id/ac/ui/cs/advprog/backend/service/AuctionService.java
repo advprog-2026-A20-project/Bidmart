@@ -2,14 +2,18 @@ package id.ac.ui.cs.advprog.backend.service;
 
 import id.ac.ui.cs.advprog.backend.dto.AuctionCreateRequest;
 import id.ac.ui.cs.advprog.backend.dto.AuctionDetailResponse;
+import id.ac.ui.cs.advprog.backend.dto.AuctionListingCreateRequest;
 import id.ac.ui.cs.advprog.backend.dto.AuctionSummaryResponse;
 import id.ac.ui.cs.advprog.backend.dto.BidPlaceRequest;
 import id.ac.ui.cs.advprog.backend.dto.BidResponse;
+import id.ac.ui.cs.advprog.backend.dto.ListingSnapshotDto;
+import id.ac.ui.cs.advprog.backend.dto.UserProfileDto;
+import id.ac.ui.cs.advprog.backend.dto.WalletCaptureRequest;
+import id.ac.ui.cs.advprog.backend.dto.WalletHoldRequest;
+import id.ac.ui.cs.advprog.backend.dto.WalletReleaseRequest;
 import id.ac.ui.cs.advprog.backend.model.Auction;
 import id.ac.ui.cs.advprog.backend.model.AuctionStatus;
 import id.ac.ui.cs.advprog.backend.model.Bid;
-import id.ac.ui.cs.advprog.backend.model.Listing;
-import id.ac.ui.cs.advprog.backend.model.User;
 import id.ac.ui.cs.advprog.backend.repository.AuctionRepository;
 import id.ac.ui.cs.advprog.backend.repository.BidRepository;
 import java.math.BigDecimal;
@@ -47,7 +51,7 @@ public class AuctionService {
 
     private record BidPlacementContext(
         Auction auction,
-        User bidder,
+        UserProfileDto bidder,
         Bid leadingBidBeforePlacement,
         BigDecimal bidAmount
     ) {
@@ -74,16 +78,16 @@ public class AuctionService {
     @Transactional
     public AuctionDetailResponse createAuction(AuctionCreateRequest request, UUID sellerId) {
         validateAuctionRequest(request);
-        User seller = userGateway.requireSeller(sellerId);
+        UserProfileDto seller = userGateway.requireSeller(sellerId);
         Instant now = Instant.now(clock);
 
-        Listing savedListing = listingGateway.createAuctionListing(
+        ListingSnapshotDto savedListing = listingGateway.createAuctionListing(new AuctionListingCreateRequest(
             request.title().trim(),
             request.description().trim(),
             normalizeMoney(request.startingPrice()),
-            seller,
+            seller.id(),
             now
-        );
+        ));
         Auction auction = buildDraftAuction(request, savedListing, now);
 
         if (Boolean.TRUE.equals(request.activateNow())) {
@@ -113,7 +117,7 @@ public class AuctionService {
 
     @Transactional
     public List<AuctionSummaryResponse> listAuctions() {
-        return auctionRepository.findAllWithListingAndSellerOrderByCreatedAtDesc().stream()
+        return auctionRepository.findAllOrderByCreatedAtDesc().stream()
             .map(this::syncAuctionIfExpired)
             .map(this::toSummaryResponse)
             .toList();
@@ -228,7 +232,7 @@ public class AuctionService {
         if (auction.getEndsAt() == null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Auction has no valid end time");
         }
-        if (Objects.equals(auction.getListing().getSeller().getId(), bidderId)) {
+        if (Objects.equals(auction.getSellerId(), bidderId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Seller cannot bid on their own auction");
         }
     }
@@ -244,9 +248,14 @@ public class AuctionService {
         return normalizeMoney(leadingBid.getAmount().add(auction.getMinimumBidIncrement()));
     }
 
-    private Auction buildDraftAuction(AuctionCreateRequest request, Listing listing, Instant createdAt) {
+    private Auction buildDraftAuction(AuctionCreateRequest request, ListingSnapshotDto listing, Instant createdAt) {
         return Auction.builder()
-            .listing(listing)
+            .listingId(listing.id())
+            .sellerId(listing.sellerId())
+            .sellerEmail(listing.sellerEmail())
+            .title(listing.title())
+            .description(listing.description())
+            .currentPrice(normalizeMoney(listing.currentPrice()))
             .status(AuctionStatus.DRAFT)
             .startingPrice(normalizeMoney(request.startingPrice()))
             .reservePrice(normalizeMoney(request.reservePrice()))
@@ -265,7 +274,7 @@ public class AuctionService {
         Instant now
     ) {
         validateBidRequest(request);
-        User bidder = userGateway.requireBuyer(bidderId);
+        UserProfileDto bidder = userGateway.requireBuyer(bidderId);
         Auction auction = loadAuctionForUpdate(auctionId);
         closeAuctionIfExpired(auction, now);
         ensureAuctionAcceptsBid(auction, bidderId);
@@ -285,12 +294,16 @@ public class AuctionService {
 
     private void holdBidderFunds(BidPlacementContext context) {
         BigDecimal requiredHoldAmount = calculateRequiredHold(context);
-        walletGateway.holdFunds(context.bidder().getId(), context.auction().getId(), requiredHoldAmount);
+        walletGateway.holdFunds(new WalletHoldRequest(
+            context.bidder().id(),
+            context.auction().getId(),
+            requiredHoldAmount
+        ));
     }
 
     private BigDecimal calculateRequiredHold(BidPlacementContext context) {
         Bid leadingBid = context.leadingBidBeforePlacement();
-        if (leadingBid != null && Objects.equals(leadingBid.getBidder().getId(), context.bidder().getId())) {
+        if (leadingBid != null && Objects.equals(leadingBid.getBidderId(), context.bidder().id())) {
             return context.bidAmount().subtract(leadingBid.getAmount());
         }
         return context.bidAmount();
@@ -300,7 +313,8 @@ public class AuctionService {
         Auction auction = context.auction();
         Bid bid = Bid.builder()
             .auction(auction)
-            .bidder(context.bidder())
+            .bidderId(context.bidder().id())
+            .bidderEmail(context.bidder().email())
             .amount(context.bidAmount())
             .sequenceNumber(auction.getNextBidSequence())
             .submittedAt(now)
@@ -310,7 +324,8 @@ public class AuctionService {
     }
 
     private void updateAuctionAfterBid(Auction auction, BigDecimal bidAmount, Instant bidReceivedAt) {
-        listingGateway.updateCurrentPrice(auction.getListing(), bidAmount);
+        auction.setCurrentPrice(bidAmount);
+        listingGateway.updateAuctionPrice(auction.getListingId(), bidAmount);
         extendAuctionIfNeeded(auction, bidReceivedAt);
         auctionRepository.save(auction);
     }
@@ -320,14 +335,15 @@ public class AuctionService {
         if (previousLeader == null) {
             return;
         }
-        if (Objects.equals(previousLeader.getBidder().getId(), context.bidder().getId())) {
+        if (Objects.equals(previousLeader.getBidderId(), context.bidder().id())) {
             return;
         }
-        walletGateway.releaseFunds(
-            previousLeader.getBidder().getId(),
+        walletGateway.releaseFunds(new WalletReleaseRequest(
+            reservationId(previousLeader.getBidderId(), context.auction().getId()),
+            previousLeader.getBidderId(),
             context.auction().getId(),
             previousLeader.getAmount()
-        );
+        ));
     }
 
     private void validateManualClosureAllowed(Auction auction, Instant now) {
@@ -348,12 +364,22 @@ public class AuctionService {
 
     private void resolveAuctionOutcome(Auction auction, Bid leadingBid, boolean reserveMet) {
         if (reserveMet) {
-            walletGateway.captureFunds(leadingBid.getBidder().getId(), auction.getId(), leadingBid.getAmount());
+            walletGateway.captureFunds(new WalletCaptureRequest(
+                reservationId(leadingBid.getBidderId(), auction.getId()),
+                leadingBid.getBidderId(),
+                auction.getId(),
+                leadingBid.getAmount()
+            ));
             auction.setStatus(AuctionStatus.WON);
             return;
         }
         if (leadingBid != null) {
-            walletGateway.releaseFunds(leadingBid.getBidder().getId(), auction.getId(), leadingBid.getAmount());
+            walletGateway.releaseFunds(new WalletReleaseRequest(
+                reservationId(leadingBid.getBidderId(), auction.getId()),
+                leadingBid.getBidderId(),
+                auction.getId(),
+                leadingBid.getAmount()
+            ));
         }
         auction.setStatus(AuctionStatus.UNSOLD);
     }
@@ -364,12 +390,12 @@ public class AuctionService {
         long totalBids = bidRepository.countByAuctionId(auction.getId());
         return new AuctionSummaryResponse(
             auction.getId(),
-            auction.getListing().getId(),
-            auction.getListing().getTitle(),
-            auction.getListing().getDescription(),
-            auction.getListing().getSeller().getId(),
-            auction.getListing().getSeller().getEmail(),
-            auction.getListing().getPrice(),
+            auction.getListingId(),
+            auction.getTitle(),
+            auction.getDescription(),
+            auction.getSellerId(),
+            auction.getSellerEmail(),
+            auction.getCurrentPrice(),
             auction.getStartingPrice(),
             auction.getMinimumBidIncrement(),
             auction.getStatus(),
@@ -389,12 +415,12 @@ public class AuctionService {
         Bid winningBid = auction.getStatus() == AuctionStatus.WON ? leadingBid : null;
         return new AuctionDetailResponse(
             auction.getId(),
-            auction.getListing().getId(),
-            auction.getListing().getTitle(),
-            auction.getListing().getDescription(),
-            auction.getListing().getSeller().getId(),
-            auction.getListing().getSeller().getEmail(),
-            auction.getListing().getPrice(),
+            auction.getListingId(),
+            auction.getTitle(),
+            auction.getDescription(),
+            auction.getSellerId(),
+            auction.getSellerEmail(),
+            auction.getCurrentPrice(),
             auction.getStartingPrice(),
             auction.getReservePrice(),
             auction.getMinimumBidIncrement(),
@@ -423,8 +449,8 @@ public class AuctionService {
             && auction.getStatus() != AuctionStatus.UNSOLD;
         return new BidResponse(
             bid.getId(),
-            bid.getBidder().getId(),
-            bid.getBidder().getEmail(),
+            bid.getBidderId(),
+            bid.getBidderEmail(),
             bid.getAmount(),
             bid.getSequenceNumber(),
             bid.getSubmittedAt(),
@@ -437,18 +463,18 @@ public class AuctionService {
     }
 
     private Auction loadAuctionForRead(UUID auctionId) {
-        return auctionRepository.findByIdWithListingAndSeller(auctionId)
+        return auctionRepository.findSnapshotById(auctionId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Auction not found"));
     }
 
     private Auction loadAuctionForUpdate(UUID auctionId) {
-        return auctionRepository.findByIdWithListingAndSellerForUpdate(auctionId)
+        return auctionRepository.findSnapshotByIdForUpdate(auctionId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Auction not found"));
     }
 
     private void ensureSellerOwnsAuction(Auction auction, UUID sellerId) {
         userGateway.requireSeller(sellerId);
-        if (!Objects.equals(auction.getListing().getSeller().getId(), sellerId)) {
+        if (!Objects.equals(auction.getSellerId(), sellerId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the seller can manage this auction");
         }
     }
@@ -510,5 +536,9 @@ public class AuctionService {
 
     private static BigDecimal money(String value) {
         return new BigDecimal(value).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private String reservationId(UUID userId, UUID auctionId) {
+        return auctionId + ":" + userId;
     }
 }

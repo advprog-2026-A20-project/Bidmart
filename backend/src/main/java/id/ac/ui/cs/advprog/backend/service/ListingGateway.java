@@ -1,19 +1,15 @@
 package id.ac.ui.cs.advprog.backend.service;
 
-import id.ac.ui.cs.advprog.backend.model.Listing;
-import id.ac.ui.cs.advprog.backend.model.User;
+import id.ac.ui.cs.advprog.backend.dto.AuctionListingCreateRequest;
+import id.ac.ui.cs.advprog.backend.dto.ListingSnapshotDto;
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.util.UUID;
 
 public interface ListingGateway {
 
-    Listing createAuctionListing(
-        String title,
-        String description,
-        BigDecimal initialPrice,
-        User seller,
-        Instant createdAt
-    );
+    ListingSnapshotDto createAuctionListing(AuctionListingCreateRequest request);
 
-    void updateCurrentPrice(Listing listing, BigDecimal updatedPrice);
+    ListingSnapshotDto getListingSnapshot(UUID listingId);
+
+    void updateAuctionPrice(UUID listingId, BigDecimal updatedPrice);
 }

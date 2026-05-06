@@ -1,14 +1,15 @@
 package id.ac.ui.cs.advprog.backend.service;
 
-import java.math.BigDecimal;
-import java.util.UUID;
+import id.ac.ui.cs.advprog.backend.dto.WalletCaptureRequest;
+import id.ac.ui.cs.advprog.backend.dto.WalletHoldRequest;
+import id.ac.ui.cs.advprog.backend.dto.WalletHoldResponse;
+import id.ac.ui.cs.advprog.backend.dto.WalletReleaseRequest;
 
 public interface WalletGateway {
 
-    void holdFunds(UUID userId, UUID auctionId, BigDecimal amount);
+    WalletHoldResponse holdFunds(WalletHoldRequest request);
 
-    void releaseFunds(UUID userId, UUID auctionId, BigDecimal amount);
+    void releaseFunds(WalletReleaseRequest request);
 
-    void captureFunds(UUID userId, UUID auctionId, BigDecimal amount);
+    void captureFunds(WalletCaptureRequest request);
 }
-

@@ -39,9 +39,11 @@ public class Bid {
     @JoinColumn(name = "auction_id", nullable = false)
     private Auction auction;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "bidder_id", nullable = false)
-    private User bidder;
+    @Column(name = "bidder_id", nullable = false)
+    private UUID bidderId;
+
+    @Column(nullable = false)
+    private String bidderEmail;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
