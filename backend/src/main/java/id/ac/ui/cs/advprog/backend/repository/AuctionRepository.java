@@ -22,28 +22,25 @@ public interface AuctionRepository extends JpaRepository<Auction, UUID> {
     @Query("""
         select a
         from Auction a
-        join fetch a.listing l
-        join fetch l.seller
+        join fetch a.listing
         order by a.createdAt desc
         """)
-    List<Auction> findAllWithListingAndSellerOrderByCreatedAtDesc();
+    List<Auction> findAllWithListingOrderByCreatedAtDesc();
 
     @Query("""
         select a
         from Auction a
-        join fetch a.listing l
-        join fetch l.seller
+        join fetch a.listing
         where a.id = :auctionId
         """)
-    Optional<Auction> findByIdWithListingAndSeller(@Param("auctionId") UUID auctionId);
+    Optional<Auction> findByIdWithListing(@Param("auctionId") UUID auctionId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         select a
         from Auction a
-        join fetch a.listing l
-        join fetch l.seller
+        join fetch a.listing
         where a.id = :auctionId
         """)
-    Optional<Auction> findByIdWithListingAndSellerForUpdate(@Param("auctionId") UUID auctionId);
+    Optional<Auction> findByIdWithListingForUpdate(@Param("auctionId") UUID auctionId);
 }

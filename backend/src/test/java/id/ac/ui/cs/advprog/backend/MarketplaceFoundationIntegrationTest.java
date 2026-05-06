@@ -358,7 +358,8 @@ class MarketplaceFoundationIntegrationTest {
             .imageUrl("https://img.example/" + title.toLowerCase().replace(" ", "-") + ".jpg")
             .price(new BigDecimal(price))
             .category(category)
-            .seller(seller)
+            .sellerId(seller.getId())
+            .sellerEmail(seller.getEmail())
             .build());
     }
 

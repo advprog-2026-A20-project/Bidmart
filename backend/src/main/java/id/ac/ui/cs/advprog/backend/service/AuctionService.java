@@ -80,7 +80,7 @@ public class AuctionService {
     @Transactional
     public AuctionDetailResponse createAuction(AuctionCreateRequest request, UUID sellerId) {
         validateAuctionRequest(request);
-        User seller = loadSeller(sellerId);
+        loadSeller(sellerId);
         Instant now = Instant.now(clock);
 
         Listing savedListing = listingService.createAuctionListing(
@@ -89,7 +89,7 @@ public class AuctionService {
             request.imageUrl(),
             normalizeMoney(request.startingPrice()),
             request.category(),
-            seller,
+            sellerId,
             now
         );
         Auction auction = buildDraftAuction(request, savedListing, now);
@@ -121,7 +121,7 @@ public class AuctionService {
 
     @Transactional
     public List<AuctionSummaryResponse> listAuctions() {
-        return auctionRepository.findAllWithListingAndSellerOrderByCreatedAtDesc().stream()
+        return auctionRepository.findAllWithListingOrderByCreatedAtDesc().stream()
             .map(this::syncAuctionIfExpired)
             .map(this::toSummaryResponse)
             .toList();
@@ -236,7 +236,7 @@ public class AuctionService {
         if (auction.getEndsAt() == null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Auction has no valid end time");
         }
-        if (Objects.equals(auction.getListing().getSeller().getId(), bidderId)) {
+        if (Objects.equals(auction.getListing().getSellerId(), bidderId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Seller cannot bid on their own auction");
         }
     }
@@ -389,8 +389,8 @@ public class AuctionService {
             auction.getListing().getId(),
             auction.getListing().getTitle(),
             auction.getListing().getDescription(),
-            auction.getListing().getSeller().getId(),
-            auction.getListing().getSeller().getEmail(),
+            auction.getListing().getSellerId(),
+            auction.getListing().getSellerEmail(),
             currentPrice,
             auction.getStartingPrice(),
             auction.getMinimumBidIncrement(),
@@ -415,8 +415,8 @@ public class AuctionService {
             auction.getListing().getId(),
             auction.getListing().getTitle(),
             auction.getListing().getDescription(),
-            auction.getListing().getSeller().getId(),
-            auction.getListing().getSeller().getEmail(),
+            auction.getListing().getSellerId(),
+            auction.getListing().getSellerEmail(),
             currentPrice,
             auction.getStartingPrice(),
             auction.getReservePrice(),
@@ -460,12 +460,12 @@ public class AuctionService {
     }
 
     private Auction loadAuctionForRead(UUID auctionId) {
-        return auctionRepository.findByIdWithListingAndSeller(auctionId)
+        return auctionRepository.findByIdWithListing(auctionId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Auction not found"));
     }
 
     private Auction loadAuctionForUpdate(UUID auctionId) {
-        return auctionRepository.findByIdWithListingAndSellerForUpdate(auctionId)
+        return auctionRepository.findByIdWithListingForUpdate(auctionId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Auction not found"));
     }
 
@@ -489,7 +489,7 @@ public class AuctionService {
 
     private void ensureSellerOwnsAuction(Auction auction, UUID sellerId) {
         loadSeller(sellerId);
-        if (!Objects.equals(auction.getListing().getSeller().getId(), sellerId)) {
+        if (!Objects.equals(auction.getListing().getSellerId(), sellerId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the seller can manage this auction");
         }
     }

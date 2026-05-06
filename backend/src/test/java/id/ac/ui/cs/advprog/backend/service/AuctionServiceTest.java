@@ -661,12 +661,12 @@ class AuctionServiceTest {
             .build();
         Auction auctionWithoutEndTime = Auction.builder()
             .status(AuctionStatus.ACTIVE)
-            .listing(Listing.builder().seller(seller).build())
+            .listing(Listing.builder().sellerId(seller.getId()).sellerEmail(seller.getEmail()).build())
             .build();
         Auction sellerOwnedAuction = Auction.builder()
             .status(AuctionStatus.ACTIVE)
             .endsAt(BASE_TIME.plusSeconds(30))
-            .listing(Listing.builder().seller(seller).build())
+            .listing(Listing.builder().sellerId(seller.getId()).sellerEmail(seller.getEmail()).build())
             .build();
 
         ReflectionTestUtils.invokeMethod(auctionService, "closeAuctionInternal", closedAuction, BASE_TIME);
@@ -678,7 +678,10 @@ class AuctionServiceTest {
             () -> ReflectionTestUtils.invokeMethod(
                 auctionService,
                 "ensureAuctionAcceptsBid",
-                Auction.builder().status(AuctionStatus.CLOSED).listing(Listing.builder().seller(seller).build()).build(),
+                Auction.builder()
+                    .status(AuctionStatus.CLOSED)
+                    .listing(Listing.builder().sellerId(seller.getId()).sellerEmail(seller.getEmail()).build())
+                    .build(),
                 buyer.getId()
             )
         );

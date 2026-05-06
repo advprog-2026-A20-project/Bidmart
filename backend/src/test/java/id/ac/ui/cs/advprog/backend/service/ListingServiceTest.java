@@ -1,9 +1,12 @@
 package id.ac.ui.cs.advprog.backend.service;
 
 import id.ac.ui.cs.advprog.backend.dto.ListingBidValidationResponse;
+import id.ac.ui.cs.advprog.backend.dto.AuctionListingCreateRequest;
 import id.ac.ui.cs.advprog.backend.dto.ListingCreateRequest;
 import id.ac.ui.cs.advprog.backend.dto.ListingDetailResponse;
 import id.ac.ui.cs.advprog.backend.dto.ListingResponse;
+import id.ac.ui.cs.advprog.backend.dto.ListingSnapshotDto;
+import id.ac.ui.cs.advprog.backend.dto.ListingSnapshotStatus;
 import id.ac.ui.cs.advprog.backend.dto.ListingUpdateRequest;
 import id.ac.ui.cs.advprog.backend.dto.PublicSellerProfileResponse;
 import id.ac.ui.cs.advprog.backend.model.Auction;
@@ -102,6 +105,105 @@ class ListingServiceTest {
         assertNull(created.imageUrl());
         assertEquals(ListingCategory.OTHER, created.category());
         assertEquals("Lainnya", created.categoryPath());
+    }
+
+    @Test
+    void createAuctionListingInternalContractShouldCreateSnapshotAndDefaultCategory() {
+        Instant createdAt = Instant.parse("2026-04-23T10:15:30Z");
+
+        ListingSnapshotDto snapshot = listingService.createAuctionListing(new AuctionListingCreateRequest(
+            "  Auction Camera  ",
+            "  Mirrorless body  ",
+            new BigDecimal("500.00"),
+            seller.getId(),
+            createdAt
+        ));
+
+        Listing reloadedListing = listingRepository.findById(snapshot.id()).orElseThrow();
+        assertEquals(seller.getId(), snapshot.sellerId());
+        assertEquals(seller.getEmail(), snapshot.sellerEmail());
+        assertEquals("Auction Camera", snapshot.title());
+        assertEquals("Mirrorless body", snapshot.description());
+        assertEquals(new BigDecimal("500.00"), snapshot.currentPrice());
+        assertEquals(ListingSnapshotStatus.ACTIVE, snapshot.status());
+        assertEquals(ListingCategory.OTHER, reloadedListing.getCategory());
+        assertEquals(createdAt, reloadedListing.getCreatedAt());
+    }
+
+    @Test
+    void createAuctionListingInternalContractShouldRejectInvalidRequests() {
+        assertStatusAndReason(
+            HttpStatus.BAD_REQUEST,
+            "Auction listing request is required",
+            () -> listingService.createAuctionListing((AuctionListingCreateRequest) null)
+        );
+        assertStatusAndReason(
+            HttpStatus.BAD_REQUEST,
+            "Seller id is required",
+            () -> listingService.createAuctionListing(new AuctionListingCreateRequest(
+                "Camera",
+                "Mirrorless body",
+                new BigDecimal("500.00"),
+                null,
+                Instant.now()
+            ))
+        );
+    }
+
+    @Test
+    void snapshotAndAuctionPriceInternalContractShouldExposeAndUpdateListings() {
+        Listing listing = saveListing(
+            seller,
+            "Vintage Clock",
+            "Mechanical table clock",
+            ListingCategory.HOME_LIVING,
+            "75.00",
+            ListingStatus.CANCELLED,
+            "https://img.example/clock.jpg"
+        );
+
+        ListingSnapshotDto snapshot = listingService.getListingSnapshot(listing.getId());
+        listingService.updateAuctionPrice(listing.getId(), new BigDecimal("125.00"));
+        ListingSnapshotDto updatedSnapshot = listingService.getListingSnapshot(listing.getId());
+
+        assertEquals(listing.getId(), snapshot.id());
+        assertEquals(ListingSnapshotStatus.CANCELLED, snapshot.status());
+        assertEquals(new BigDecimal("125.00"), updatedSnapshot.currentPrice());
+        assertNotNull(listingRepository.findById(listing.getId()).orElseThrow().getUpdatedAt());
+
+        assertStatusAndReason(
+            HttpStatus.NOT_FOUND,
+            "Listing not found",
+            () -> listingService.getListingSnapshot(UUID.randomUUID())
+        );
+        assertStatusAndReason(
+            HttpStatus.NOT_FOUND,
+            "Listing not found",
+            () -> listingService.updateAuctionPrice(UUID.randomUUID(), new BigDecimal("125.00"))
+        );
+        assertStatusAndReason(
+            HttpStatus.BAD_REQUEST,
+            "Price must be positive",
+            () -> listingService.updateAuctionPrice(listing.getId(), BigDecimal.ZERO)
+        );
+    }
+
+    @Test
+    void getListingDetailShouldFallbackToSellerDirectoryWhenSellerEmailSnapshotIsMissing() {
+        Listing legacyListing = listingRepository.save(Listing.builder()
+            .title("Legacy Watch")
+            .description("Stored before seller email snapshot existed")
+            .imageUrl("https://img.example/legacy-watch.jpg")
+            .price(new BigDecimal("99.00"))
+            .category(ListingCategory.FASHION)
+            .status(ListingStatus.ACTIVE)
+            .sellerId(seller.getId())
+            .createdAt(Instant.now())
+            .build());
+
+        ListingDetailResponse detail = listingService.getListingDetail(legacyListing.getId());
+
+        assertEquals(seller.getEmail(), detail.sellerEmail());
     }
 
     @Test
@@ -477,7 +579,8 @@ class ListingServiceTest {
             .price(new BigDecimal(price))
             .category(category)
             .status(status)
-            .seller(owner)
+            .sellerId(owner.getId())
+            .sellerEmail(owner.getEmail())
             .createdAt(Instant.now())
             .build());
     }
