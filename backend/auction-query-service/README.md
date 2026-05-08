@@ -1,35 +1,75 @@
-# Auction Query Service
+# Bidmart Auction Query Service
 
-Read-only microservice untuk endpoint auction query:
+Read-only service untuk auction query di Bidmart.
 
-- `GET /api/auctions`
-- `GET /api/auctions/{id}`
-- `GET /api/auctions/{id}/bids`
-- `GET /actuator/health`
+## Responsibilities
 
-## Local run
+- Read auction list
+- Read auction detail
+- Read bid history
+- Expose health check
 
-Dari root backend:
+## Endpoints
 
-```bash
-./gradlew :auction-query-service:bootRunLocal
+```txt
+GET /api/auctions
+GET /api/auctions/{auctionId}
+GET /api/auctions/{auctionId}/bids
+GET /actuator/health
 ```
 
-Atau profile production-like:
+## Local development
+
+Run test:
 
 ```bash
-./gradlew :auction-query-service:bootRun --args='--spring.profiles.active=staging'
+./gradlew test
 ```
 
-## Required env
-
-- `PORT` default `8081`
-- `AUCTION_QUERY_DB_URL`
-- `AUCTION_QUERY_DB_USERNAME`
-- `AUCTION_QUERY_DB_PASSWORD`
-
-## Build jar
+Build jar:
 
 ```bash
-./gradlew :auction-query-service:bootJar
+./gradlew bootJar
+```
+
+Build Docker image:
+
+```bash
+docker build -t bidmart-auction-query-service .
+```
+
+Run Docker container:
+
+```bash
+docker run --env-file .env -p 8081:8081 bidmart-auction-query-service
+```
+
+## Environment variables
+
+```txt
+PORT
+SPRING_PROFILES_ACTIVE
+SPRING_DATASOURCE_URL
+SPRING_DATASOURCE_USERNAME
+SPRING_DATASOURCE_PASSWORD
+```
+
+## Migration status
+
+This service is extracted from the legacy Bidmart gateway/monolith as the first read-side microservice.
+
+Current phase:
+
+```txt
+gateway + auction-query-service
+```
+
+Not included yet:
+
+```txt
+auction-command-service
+wallet-service
+auth-service
+bid-service
+notification-service
 ```

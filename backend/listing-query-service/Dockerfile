@@ -3,8 +3,8 @@ WORKDIR /app
 COPY . .
 RUN set -eux; \
     service_dir="."; \
-    if [ -d auction-query-service/src ]; then \
-        service_dir="auction-query-service"; \
+    if [ -d listing-query-service/src ]; then \
+        service_dir="listing-query-service"; \
     fi; \
     cd "$service_dir"; \
     gradle bootJar --no-daemon; \
@@ -13,5 +13,5 @@ RUN set -eux; \
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /tmp/app.jar app.jar
-EXPOSE 8081
+EXPOSE 8082
 ENTRYPOINT ["java", "-jar", "app.jar"]

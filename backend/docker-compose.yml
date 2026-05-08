@@ -1,0 +1,76 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: bidmart-postgres
+    environment:
+      POSTGRES_DB: bidmart
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bidmart"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bidmart-gateway
+    environment:
+      PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bidmart
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      JWT_SECRET: local-dev-secret-please-change-32-chars
+      AUCTION_QUERY_SERVICE_ENABLED: "true"
+      AUCTION_QUERY_SERVICE_BASE_URL: http://auction-query-service:8081
+      AUCTION_QUERY_SERVICE_ROLLOUT_MODE: FULL
+      AUCTION_QUERY_SERVICE_FAIL_OPEN: "true"
+      LISTING_QUERY_SERVICE_ENABLED: "true"
+      LISTING_QUERY_SERVICE_BASE_URL: http://listing-query-service:8082
+      LISTING_QUERY_SERVICE_ROLLOUT_MODE: FULL
+      LISTING_QUERY_SERVICE_FAIL_OPEN: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auction-query-service:
+        condition: service_started
+      listing-query-service:
+        condition: service_started
+    ports:
+      - "8080:8080"
+
+  auction-query-service:
+    build:
+      context: ./auction-query-service
+      dockerfile: Dockerfile
+    container_name: bidmart-auction-query-service
+    environment:
+      PORT: 8081
+      AUCTION_QUERY_DB_URL: jdbc:postgresql://postgres:5432/bidmart
+      AUCTION_QUERY_DB_USERNAME: postgres
+      AUCTION_QUERY_DB_PASSWORD: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+
+  listing-query-service:
+    build:
+      context: ./listing-query-service
+      dockerfile: Dockerfile
+    container_name: bidmart-listing-query-service
+    environment:
+      PORT: 8082
+      LISTING_QUERY_DB_URL: jdbc:postgresql://postgres:5432/bidmart
+      LISTING_QUERY_DB_USERNAME: postgres
+      LISTING_QUERY_DB_PASSWORD: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8082:8082"

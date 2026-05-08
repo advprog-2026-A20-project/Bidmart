@@ -20,8 +20,10 @@ configurations {
     }
 }
 
-repositories {
-    mavenCentral()
+if (project != rootProject) {
+    repositories {
+        mavenCentral()
+    }
 }
 
 dependencies {
