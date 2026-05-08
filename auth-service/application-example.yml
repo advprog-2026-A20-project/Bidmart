@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: bidmart-auth-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bidmart_auth
+    username: bidmart
+    password: change-me
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+server:
+  port: 8081
+
+security:
+  jwt:
+    secret: replace-with-minimum-32-char-secret-key
+    expiration-ms: 86400000

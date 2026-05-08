@@ -1,0 +1,10 @@
+.env
+.env.*
+*.iml
+.idea/
+.vscode/
+build/
+out/
+target/
+.gradle/
+*.log
